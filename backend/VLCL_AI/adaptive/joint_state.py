@@ -59,6 +59,9 @@ class JointDecisionState:
     constraint_status: ConstraintStatus      # Detailed constraint breakdown
     history: List[Dict[str, Any]] = field(default_factory=list) # Convergence history across iterations
 
+    def get(self, key: str, default: Any = None) -> Any:
+        return getattr(self, key, default)
+
     def to_dict(self) -> Dict[str, Any]:
         """Converts state into a JSON-serializable dictionary."""
         return {

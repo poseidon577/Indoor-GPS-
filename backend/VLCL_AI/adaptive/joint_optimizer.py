@@ -59,8 +59,8 @@ class JointAdaptiveOptimizer:
         self.loc_controller = LocalizationPowerController(
             target_error_m=self.target_loc_error_m,
             min_p_loc_w=0.1,
-            max_p_loc_w=self.per_led_max_power_w,
-            tolerance_m=0.01,
+            max_p_loc_w=self.per_led_max_power_w * 0.8,
+            tolerance_m=0.005,
             max_search_iterations=6
         )
 
@@ -144,20 +144,32 @@ class JointAdaptiveOptimizer:
             snr_matrix = np.zeros((K, N), dtype=float)
 
             # Extract physics channel state for each device
-            R_pd = 0.53 # Photodiode responsivity [A/W]
+            num_leds = len(physics_state.total_gains) if hasattr(physics_state, 'total_gains') and physics_state.total_gains else 4
             for k_idx, dev_id in enumerate(device_ids):
-                # Channel gain H from LED dev_id to receiver
-                h_opt = physics_state.total_gains.get(dev_id, physics_state.los_gains.get(dev_id, 1e-6))
-                noise_var = physics_state.noise_variances.get(dev_id, 1e-12)
-                p_subcarrier = comm_power_budget_total / (N / 2) # Nominal per-subcarrier power
+                assigned_led_id = dev_id if dev_id <= num_leds else ((dev_id - 1) % num_leds) + 1
+                assigned_led_idx = assigned_led_id - 1
                 
-                # Compute subcarrier SNRs
-                for n in range(N):
-                    f_hz = n * grid.subcarrier_spacing
-                    h_led_mag = self.vlcl_engine.led_response.magnitude(f_hz)
-                    h_total = h_opt * h_led_mag
-                    snr_matrix[k_idx, n] = ((R_pd * h_total) ** 2 * p_subcarrier) / max(noise_var, 1e-15)
+                noise_var = physics_state.noise_variances.get(dev_id, 1e-12)
+                p_subcarrier = (comm_power_budget_total / num_leds) / (N / 2)
+                
+                powers = np.zeros((N, num_leds))
+                powers[:, assigned_led_idx] = p_subcarrier
+                
+                gains = np.zeros((num_leds, N), dtype=float)
+                for i_idx, led_id in enumerate(range(1, num_leds + 1)):
+                    h_opt = physics_state.total_gains.get(led_id, physics_state.los_gains.get(led_id, 1e-6))
+                    for n in range(N):
+                        f_hz = n * grid.subcarrier_spacing
+                        h_led_mag = self.vlcl_engine.led_response.magnitude(f_hz)
+                        gains[i_idx, n] = h_opt * h_led_mag
 
+                # Use official M3-COM-002 compliant SNR calculator
+                snr_matrix[k_idx, :] = compute_communication_snr(
+                    responsivity=0.53,
+                    subcarrier_powers=powers,
+                    channel_gains=gains,
+                    noise_variance=noise_var
+                )
             # Allocate subcarriers and modulation orders
             alloc_decision = self.vlcl_engine.adaptive_engine.allocate_from_snr_matrix(
                 snr_matrix=snr_matrix,

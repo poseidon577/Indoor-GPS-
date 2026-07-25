@@ -129,14 +129,19 @@ class PowerPreEqualizationEngine:
             if num_pos > 0 and p_comm_avail > 0:
                 if power_mode.upper() == "WATER_FILLING":
                     # Compute unit-power SNR for user k on these carriers
-                    channel_gains = np.ones((self.num_leds, N)) * physics_state.total_gains.get(led_id, 1e-3)
+                    opt_gain = physics_state.total_gains.get(led_id, 1e-3)
+                    channel_gains = np.zeros((self.num_leds, N), dtype=float)
+                    for n_idx in range(N):
+                        f_hz = n_idx * grid.subcarrier_spacing
+                        channel_gains[led_idx, n_idx] = opt_gain * self.led_responses[led_id].magnitude(f_hz)
+
                     noise_var = physics_state.noise_variances.get(led_id, 1e-12)
                     
                     unit_powers = np.zeros((N, self.num_leds))
                     unit_powers[:, led_idx] = 1.0  # 1 Watt test signal
                     
                     unit_snrs = compute_communication_snr(
-                        responsivity=0.54,
+                        responsivity=0.53,
                         subcarrier_powers=unit_powers,
                         channel_gains=channel_gains,
                         noise_variance=noise_var
@@ -186,11 +191,18 @@ class PowerPreEqualizationEngine:
         
         for k_idx, dev_id in enumerate(device_ids):
             led_id = dev_id if dev_id <= self.num_leds else ((dev_id - 1) % self.num_leds) + 1
-            channel_gains = np.ones((self.num_leds, N)) * physics_state.total_gains.get(led_id, 1e-3)
+            led_idx = led_id - 1
+            
+            opt_gain = physics_state.total_gains.get(led_id, 1e-3)
+            channel_gains = np.zeros((self.num_leds, N), dtype=float)
+            for n_idx in range(N):
+                f_hz = n_idx * grid.subcarrier_spacing
+                channel_gains[led_idx, n_idx] = opt_gain * self.led_responses[led_id].magnitude(f_hz)
+
             noise_var = physics_state.noise_variances.get(led_id, 1e-12)
             
             snr_k = compute_communication_snr(
-                responsivity=0.54,
+                responsivity=0.53,
                 subcarrier_powers=powers_tx,
                 channel_gains=channel_gains,
                 noise_variance=noise_var
@@ -199,13 +211,22 @@ class PowerPreEqualizationEngine:
             
             # Predict BER for assigned carriers
             active_scs = np.where(rho[k_idx, :] > 0)[0]
-            M = allocation_decision.modulation_map.get((dev_id, active_scs[0]), 16) if len(active_scs) > 0 else 16
-            
-            if len(active_scs) > 0 and M >= 2:
-                avg_snr = float(np.mean(snr_k[active_scs]))
-                ber_val = float(BERCalculator.compute_analytical_qam(avg_snr, M))
-                predicted_ber[dev_id] = ber_val
-                modulation_feasible[dev_id] = (ber_val <= self.config.ber_max)
+            if len(active_scs) > 0:
+                bers = []
+                for sc_idx in active_scs:
+                    # Look up modulation order specific to this subcarrier, default 16
+                    M = allocation_decision.modulation_map.get((dev_id, sc_idx), 16)
+                    if M >= 2:
+                        b = float(BERCalculator.compute_analytical_qam(float(snr_k[sc_idx]), M))
+                        bers.append(b)
+                
+                if bers:
+                    avg_ber = sum(bers) / len(bers)
+                    predicted_ber[dev_id] = avg_ber
+                    modulation_feasible[dev_id] = (avg_ber <= self.config.ber_max)
+                else:
+                    predicted_ber[dev_id] = 1.0
+                    modulation_feasible[dev_id] = False
             else:
                 predicted_ber[dev_id] = 1.0
                 modulation_feasible[dev_id] = False

@@ -34,6 +34,12 @@ def compute_communication_snr(
         noise_variance (σ²): Total noise power [A²].
         eta_scaling: System efficiency factor η. Default 1.0.
     """
+    responsivity = float(responsivity)
+    
+    # Enforce dimensions
+    if subcarrier_powers.shape[1] != channel_gains.shape[0]:
+        raise ValueError(f"Dimension mismatch: subcarrier_powers {subcarrier_powers.shape} vs channel_gains {channel_gains.shape}")
+        
     n_subcarriers, n_leds = subcarrier_powers.shape
 
     # M3-COM-002: Apply sqrt to powers before summing — Σ √P_{n,i} · H_{i,n,k}

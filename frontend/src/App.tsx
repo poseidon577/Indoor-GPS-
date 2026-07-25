@@ -337,7 +337,7 @@ export default function App() {
   const physicsFrameRef = useRef(0);
   const physicsInFlightRef = useRef(false);
   useEffect(() => {
-    if (!state.isPlaying) return;
+    if (!state.isPlaying && state.physicsMetrics) return;
     if (physicsInFlightRef.current) return; // skip if previous call still running
 
     const POLL_EVERY = 10;
@@ -405,7 +405,7 @@ export default function App() {
   const commFrameRef = useRef(0);
   const commInFlightRef = useRef(false);
   useEffect(() => {
-    if (!state.isPlaying) return;
+    if (!state.isPlaying && state.commMetrics) return;
     if (commInFlightRef.current) return; // skip if previous call still running
 
     const POLL_EVERY = 30;
@@ -473,7 +473,7 @@ export default function App() {
   const locFrameRef = useRef(0);
   const locInFlightRef = useRef(false);
   useEffect(() => {
-    if (!state.isPlaying) return;
+    if (!state.isPlaying && state.localizationMetrics) return;
     if (locInFlightRef.current) return; // skip if previous call still running
 
     const POLL_EVERY = 60; // longer interval — localization is compute-heavy
@@ -541,7 +541,7 @@ export default function App() {
   const integratedFrameRef = useRef(0);
   const integratedInFlightRef = useRef(false);
   useEffect(() => {
-    if (!state.isPlaying) return;
+    if (!state.isPlaying && state.integratedMetrics) return;
     if (integratedInFlightRef.current) return;
 
     const POLL_EVERY = 60;
@@ -609,7 +609,7 @@ export default function App() {
   const adaptiveFrameRef = useRef(0);
   const adaptiveInFlightRef = useRef(false);
   useEffect(() => {
-    if (!state.isPlaying) return;
+    if (!state.isPlaying && state.adaptiveMetrics) return;
     if (adaptiveInFlightRef.current) return;
 
     const POLL_EVERY = 60;
@@ -683,7 +683,7 @@ export default function App() {
   const powerFrameRef = useRef(0);
   const powerInFlightRef = useRef(false);
   useEffect(() => {
-    if (!state.isPlaying) return;
+    if (!state.isPlaying && state.powerMetrics) return;
     if (powerInFlightRef.current) return;
 
     const POLL_EVERY = 90;

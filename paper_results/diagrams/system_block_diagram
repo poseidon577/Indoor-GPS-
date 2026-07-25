@@ -1,0 +1,21 @@
+digraph SystemBlockDiagram {
+	bgcolor=transparent dpi=600 fontname="Times New Roman" fontsize=10 rankdir=LR
+	node [color=black fillcolor=white fontname="Times New Roman" fontsize=10 shape=box style=filled]
+	edge [fontname="Times New Roman" fontsize=9]
+	A [label="Digital Twin Dashboard"]
+	B [label="Synchronization Layer"]
+	C [label="Optimization Layer
+(Joint Adaptive Engine)"]
+	D [label="Physics Engine"]
+	E [label="Environment Twin"]
+	F [label="Communication Twin"]
+	G [label="Localization Twin"]
+	A -> B
+	B -> C
+	C -> E
+	E -> D
+	D -> F
+	D -> G
+	F -> B
+	G -> B
+}

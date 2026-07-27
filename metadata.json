@@ -1,6 +1,0 @@
-{
-  "name": "VLCL Digital Twin",
-  "description": "3D Digital Twin and physical simulation environment of an Integrated Visible Light Communication and Localization (VLCL) Research Laboratory.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

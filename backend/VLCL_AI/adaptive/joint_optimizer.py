@@ -1,19 +1,30 @@
 # joint_optimizer.py
 import numpy as np
+from typing import Dict, List, Optional, Tuple, Any
+from loguru import logger
 import copy
-from typing import Dict, List, Any, Tuple, Optional, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from VLCL_AI.integrated_vlcl.engine import IntegratedVLCLEngine
 
 from VLCL_AI.environment.state import EnvironmentState
 from VLCL_AI.physics.physics_engine import PhysicsState
+from VLCL_AI.physics.constants import DEFAULT_RESPONSIVITY
+from VLCL_AI.communication.subcarrier_grid import SubcarrierGrid
+from VLCL_AI.communication.snr import compute_communication_snr
+
 from VLCL_AI.adaptive.config import AdaptiveConfig
+from VLCL_AI.adaptive.decision import AllocationDecision
+from VLCL_AI.adaptive.power_decision import PowerDecision
 from VLCL_AI.adaptive.joint_state import JointDecisionState, ConstraintStatus
+from VLCL_AI.adaptive.engine import AdaptiveTransmissionEngine
+from VLCL_AI.adaptive.power_engine import PowerPreEqualizationEngine
+from VLCL_AI.integrated_vlcl.power_mapper import MultiLedPowerMapper
 from VLCL_AI.adaptive.constraint_evaluator import ConstraintEvaluator
 from VLCL_AI.adaptive.loc_power_controller import LocalizationPowerController
 from VLCL_AI.adaptive.feedback import ChannelFeedback
-from VLCL_AI.communication.snr import compute_communication_snr
+
+# SystemState import — used by optimize_state() entry point.
+# JointAdaptiveOptimizer OWNS state.optimization;
+# it reads state.environment (Module 1) and state.physics (Module 2).
+from VLCL_AI.system_state import SystemState
 
 class JointAdaptiveOptimizer:
     """
@@ -63,6 +74,47 @@ class JointAdaptiveOptimizer:
             tolerance_m=0.005,
             max_search_iterations=6
         )
+
+    def optimize_state(
+        self,
+        state: SystemState,
+        min_rates_bps: Optional[Dict[int, float]] = None,
+        bits_dict: Optional[Dict[int, np.ndarray]] = None,
+        power_mode: str = "WATER_FILLING",
+        pre_eq_mode: str = "REGULARIZED"
+    ) -> SystemState:
+        """
+        SystemState-aware entry point for Module 8.
+
+        Reads:
+            ``state.environment`` — Module 1 SSOT
+            ``state.physics``     — Module 2 SSOT
+
+        Writes:
+            ``state.optimization`` — JointDecisionState with iteration history (owned by Module 8)
+
+        Args:
+            state: SystemState with environment and physics populated.
+            min_rates_bps: QoS requirements per user.
+            bits_dict: Optional communication bits payload per device.
+            power_mode: Power allocation algorithm.
+            pre_eq_mode: Pre-equalization mode.
+
+        Returns:
+            The same SystemState with ``state.optimization`` updated.
+        """
+        env_state = state.require_environment()
+        phys_state = state.require_physics()
+
+        state.optimization = self.optimize(
+            env_state=env_state,
+            physics_state=phys_state,
+            min_rates_bps=min_rates_bps,
+            bits_dict=bits_dict,
+            power_mode=power_mode,
+            pre_eq_mode=pre_eq_mode
+        )
+        return state
 
     def optimize(
         self,
@@ -165,7 +217,7 @@ class JointAdaptiveOptimizer:
 
                 # Use official M3-COM-002 compliant SNR calculator
                 snr_matrix[k_idx, :] = compute_communication_snr(
-                    responsivity=0.53,
+                    responsivity=DEFAULT_RESPONSIVITY,  # FIX: was 0.53 (inconsistent with all other sites using DEFAULT_RESPONSIVITY=0.54)
                     subcarrier_powers=powers,
                     channel_gains=gains,
                     noise_variance=noise_var

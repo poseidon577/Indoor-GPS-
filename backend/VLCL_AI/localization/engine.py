@@ -18,6 +18,11 @@ from VLCL_AI.localization.calibration import LocalizationBiasModel, Localization
 from VLCL_AI.localization.metrics import LocalizationMetrics
 from VLCL_AI.localization.state import LocalizationState
 
+# SystemState import — used by new step_state() entry point.
+# LocalizationEngine OWNS state.localization;
+# it reads state.environment (Module 1) and state.physics (Module 2).
+from VLCL_AI.system_state import SystemState
+
 class LocalizationEngine:
     """The master coordinator for the Module 4 A-DPDOA localization subsystem."""
 
@@ -99,9 +104,35 @@ class LocalizationEngine:
         self.frame_id = 0
         self.states_history = []
 
+    def step_state(self, state: SystemState) -> SystemState:
+        """
+        SystemState-aware entry point for Module 4.
+
+        Reads:
+            ``state.environment`` — LED topology, visibility, room bounds (Module 1)
+            ``state.physics``     — optical gains, noise, propagation delays (Module 2)
+
+        Writes:
+            ``state.localization`` — estimated position, solver metadata (owned by Module 4)
+
+        SSOT guarantee: ``led_ids``, ``room_dims``, and receiver position are all
+        sourced from ``state.environment`` — never re-derived locally.
+
+        Args:
+            state: SystemState with environment and physics sub-states populated.
+
+        Returns:
+            The same SystemState with ``state.localization`` updated.
+        """
+        env = state.require_environment()
+        phys = state.require_physics()
+        state.localization = self.step(env, phys)
+        return state
+
     def step(self, environment_state: EnvironmentState, physics_state: PhysicsState) -> LocalizationState:
         """
-        Executes a single step of the localization engine, producing an estimated position.
+        [LEGACY] Executes a single step of the localization engine.
+        Preserved for backward compatibility. Prefer ``step_state(state)`` in new code.
         """
         self.frame_id += 1
         t_sim = environment_state.current_time

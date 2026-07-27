@@ -15,6 +15,11 @@ from VLCL_AI.adaptive.decision import AllocationDecision
 from VLCL_AI.adaptive.metrics import AdaptiveMetrics
 from VLCL_AI.adaptive.validation import AllocationValidator
 
+# SystemState import — used by allocate_state() entry point.
+# AdaptiveTransmissionEngine OWNS state.adaptive_alloc;
+# it reads state.physics (Module 2) and state.environment (Module 1).
+from VLCL_AI.system_state import SystemState
+
 class AdaptiveTransmissionEngine:
     """
     Unified Master Coordinator for Module 6: Adaptive Modulation & Dynamic Subcarrier Allocation Engine.
@@ -41,6 +46,62 @@ class AdaptiveTransmissionEngine:
         self.allocator = TwoStageSubcarrierAllocator(
             subcarrier_bandwidth_hz=self.config.subcarrier_bandwidth_hz
         )
+
+    def allocate_state(
+        self,
+        state: SystemState,
+        grid: SubcarrierGrid,
+        min_rates_bps: Optional[Dict[int, float]] = None,
+        localization_indices: Optional[List[int]] = None
+    ) -> SystemState:
+        """
+        SystemState-aware entry point for Module 6.
+
+        Reads:
+            ``state.environment`` — LED IDs, num_leds (SSOT for topology)
+            ``state.physics``     — per-LED SNR in dB (Module 2 SSOT, avoids SNR re-computation)
+
+        Writes:
+            ``state.adaptive_alloc`` — rho, modulation map, QoS status (owned by Module 6)
+
+        SSOT fix: SNR matrix is built from ``state.physics.snrs`` (Module 2 output),
+        broadcast flat-spectrum across all subcarriers. This replaces the former
+        bootstrap ``compute_communication_snr()`` call in ``IntegratedVLCLEngine``.
+
+        Args:
+            state:               SystemState with environment and physics populated.
+            grid:                SubcarrierGrid (frequency plan, FFT size).
+            min_rates_bps:       Optional minimum rate requirement per device_id.
+            localization_indices: Subcarrier indices reserved for localization tones.
+
+        Returns:
+            The same SystemState with ``state.adaptive_alloc`` updated.
+        """
+        env = state.require_environment()
+        phys = state.require_physics()
+
+        # SSOT: derive device topology from environment (not hardcoded)
+        led_ids = list(env.led_ids) if env.led_ids else sorted(env.led_positions.keys())
+        K = len(led_ids)
+        N = grid.fft_size
+
+        # Build SNR matrix from Module 2 SSOT (state.physics.snrs) — no re-computation
+        snr_matrix = np.zeros((K, N), dtype=float)
+        for k, led_id in enumerate(led_ids):
+            snr_db = phys.snrs.get(led_id, 0.0)
+            snr_matrix[k, :] = 10.0 ** (snr_db / 10.0)  # dB → linear
+
+        if min_rates_bps is None:
+            min_rates_bps = {dev_id: 1.0e6 for dev_id in led_ids}
+
+        state.adaptive_alloc = self.allocate_from_snr_matrix(
+            snr_matrix=snr_matrix,
+            device_ids=led_ids,
+            min_rates_bps=min_rates_bps,
+            grid=grid,
+            localization_indices=localization_indices
+        )
+        return state
 
     def allocate_resources(
         self,

@@ -27,6 +27,11 @@ from VLCL_AI.communication.metrics import CommunicationMetrics
 from VLCL_AI.communication.state import CommunicationState
 from VLCL_AI.communication.exceptions import VLCLCommunicationError
 
+# SystemState import — used by new step_state() entry point.
+# CommunicationEngine OWNS state.communication;
+# it reads state.environment (Module 1) and state.physics (Module 2).
+from VLCL_AI.system_state import SystemState
+
 class CommunicationEngine:
     """
     Visible Light Communication and OFDM Engine (Module 3).
@@ -176,11 +181,41 @@ class CommunicationEngine:
         self.pre_equalizer.regularization = regularization
         self.pre_equalizer.enabled = (mode.lower() != "none")
 
+    def step_state(self, state: SystemState) -> SystemState:
+        """
+        SystemState-aware entry point for Module 3.
+
+        Reads:
+            ``state.environment`` — LED topology, receiver kinematics (Module 1)
+            ``state.physics``     — optical gains, noise variances, SNR (Module 2)
+
+        Writes:
+            ``state.communication`` — BER, throughput, modulation (owned by Module 3)
+
+        SSOT guarantee: ``num_leds`` and ``led_ids`` are read from
+        ``state.environment``, never re-derived locally.
+
+        Args:
+            state: SystemState with environment and physics sub-states populated.
+
+        Returns:
+            The same SystemState with ``state.communication`` updated.
+        """
+        env = state.require_environment()
+        phys = state.require_physics()
+        bits = self.bit_generator.generate(self.config.get("simulation")["bits_per_frame"])
+        state.communication = self.transmit_receive(bits, env, phys)
+        return state
+
     def step(self, environment_state: EnvironmentState, physics_state: PhysicsState) -> CommunicationState:
-        """Runs a complete end-to-end communications step for a moving receiver."""
-        # Use random bits
+        """
+        [LEGACY] Runs a complete end-to-end communications step for a moving receiver.
+        Preserved for backward compatibility; delegates to transmit_receive().
+        Prefer ``step_state(state)`` in new code.
+        """
         bits = self.bit_generator.generate(self.config.get("simulation")["bits_per_frame"])
         return self.transmit_receive(bits, environment_state, physics_state)
+
 
     def transmit_receive(
         self,

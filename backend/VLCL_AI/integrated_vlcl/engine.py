@@ -33,6 +33,12 @@ from VLCL_AI.adaptive.power_decision import PowerDecision
 from VLCL_AI.adaptive.decision import AllocationDecision
 from VLCL_AI.communication.snr import compute_communication_snr
 
+# SystemState import — used by new step_state() entry point.
+# IntegratedVLCLEngine OWNS state.integrated;
+# it reads state.environment (M1), state.physics (M2),
+# state.adaptive_alloc (M6, optional), and state.power (M7, optional).
+from VLCL_AI.system_state import SystemState
+
 # A-4/A-5 FIX: name the bootstrap/assumption constants so they are visible,
 # configurable, and don't look like real system parameters.
 BOOTSTRAP_POWER_W: float = 1.0       # Seed SNR estimation power (1 W uniform, not the operating point)
@@ -220,6 +226,48 @@ class IntegratedVLCLEngine:
         self.prev_phases = None
         self.initialize()
 
+    def step_state(self, state: SystemState) -> SystemState:
+        """
+        SystemState-aware entry point for Module 5.
+
+        Reads:
+            ``state.environment``   — LED topology, receiver geometry (Module 1)
+            ``state.physics``       — optical gains, noise variances (Module 2)
+            ``state.adaptive_alloc`` — subcarrier allocation, modulation map (Module 6, optional)
+            ``state.power``          — power matrix (Module 7, optional)
+
+        Writes:
+            ``state.integrated`` — combined comm + loc output (owned by Module 5)
+
+        SSOT fix (bootstrap SNR):
+            When adaptive_mode=True and no allocation is pre-computed, the bootstrap
+            SNR now reads ``state.physics.snrs`` (Module 2 output) instead of calling
+            ``compute_communication_snr()`` redundantly with a seed power assumption.
+            This eliminates the duplicate computation flagged in the audit.
+
+        Args:
+            state: SystemState with at minimum environment and physics populated.
+
+        Returns:
+            The same SystemState with ``state.integrated`` updated.
+        """
+        env_state = state.require_environment()
+        physics_state = state.require_physics()
+
+        # Propagate optional Module 6/7 decisions from state
+        alloc_decision = state.adaptive_alloc
+        power_decision = state.power
+
+        # Run the core step logic (delegates to legacy step())
+        result = self.step(
+            env_state=env_state,
+            physics_state=physics_state,
+            allocation_decision=alloc_decision,
+            adaptive_mode=(alloc_decision is None and state.physics is not None)
+        )
+        state.integrated = result
+        return state
+
     def step(
         self,
         env_state: EnvironmentState,
@@ -231,37 +279,32 @@ class IntegratedVLCLEngine:
         adaptive_mode: bool = False
     ) -> IntegratedVLCLState:
         """
-        Executes a single step of the integrated physical-layer simulation.
-        
-        1. If adaptive_mode is True and allocation_decision is None, derives allocation via Module 6.
-        2. Generates composite transmitter waveforms.
-        3. Simulates physical channel propagation with LED frequency roll-offs and delay.
-        4. Separates and decodes multi-user communication streams.
-        5. Separates and estimates 3D coordinate localization details.
+        [LEGACY / internal] Executes a single step of the integrated physical-layer simulation.
+        Preserved for backward compatibility and called internally by ``step_state()``.
+        Prefer ``step_state(state)`` in new code.
+
+        SSOT fix (bootstrap SNR, adaptive_mode):
+            When adaptive_mode=True and allocation_decision is None, the bootstrap
+            now reads physics_state.snrs for the initial SNR estimate instead of
+            calling compute_communication_snr() with a seed BOOTSTRAP_POWER_W.
+            This removes one of the three redundant SNR computation sites.
         """
         # Module 6 Adaptive Integration
         if adaptive_mode and allocation_decision is None:
-            # X-1 SSOT: derive num_leds from the authoritative EnvironmentState — never use
-            # self.num_leds (constructor default), which may differ from the live scene topology.
+            # SSOT FIX: Read SNR from state.physics (Module 2 output) instead of
+            # recomputing with a bootstrap seed power. Module 2 is the single owner
+            # of SNR values; duplicating the computation here was an audit finding.
+            # We build the snr_matrix from physics_state.snrs (per-LED scalar SNR)
+            # broadcast across all subcarriers as a conservative flat-spectrum estimate.
             num_leds = env_state.num_leds if env_state.num_leds > 0 else len(env_state.led_positions)
-
-            # Estimate SNR per LED / subcarrier
             N = self.grid.fft_size
             snr_matrix = np.zeros((num_leds, N), dtype=float)
-            
-            for k in range(num_leds):
-                led_id = list(env_state.led_positions.keys())[k]  # use actual led_id
-                gains = np.ones((num_leds, N)) * physics_state.total_gains.get(led_id, 1e-3)
-                # A-4 FIX: BOOTSTRAP_POWER_W is a seed value for SNR estimation, not the operating point.
-                # The actual operating power comes from the power budget in Module 7.
-                powers = np.ones((N, num_leds)) * BOOTSTRAP_POWER_W
-                noise_var = physics_state.noise_variances.get(led_id, 1e-12)
-                snr_matrix[k, :] = compute_communication_snr(
-                    responsivity=DEFAULT_RESPONSIVITY,  # X-3 FIX: use constant
-                    subcarrier_powers=powers,
-                    channel_gains=gains,
-                    noise_variance=noise_var
-                )
+
+            for k, led_id in enumerate(env_state.led_ids or list(env_state.led_positions.keys())):
+                # physics_state.snrs holds the per-LED SNR in dB (Module 2 SSOT)
+                snr_db = physics_state.snrs.get(led_id, 0.0)
+                # Convert dB to linear for the adaptive allocation SNR matrix
+                snr_matrix[k, :] = 10.0 ** (snr_db / 10.0)
                 
             dev_ids = list(range(1, num_leds + 1))
             # A-5 FIX: DEFAULT_MIN_RATE_BPS is a named constant, not a magic literal 1.0e6

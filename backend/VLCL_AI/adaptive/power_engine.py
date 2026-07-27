@@ -17,6 +17,11 @@ from VLCL_AI.adaptive.transfer_function import TransferFunctionMatrix
 from VLCL_AI.physics.physics_engine import PhysicsState
 from VLCL_AI.physics.constants import DEFAULT_RESPONSIVITY
 
+# SystemState import — used by process_state() entry point.
+# PowerPreEqualizationEngine OWNS state.power;
+# it reads state.adaptive_alloc (Module 6) and state.physics (Module 2).
+from VLCL_AI.system_state import SystemState
+
 class PowerPreEqualizationEngine:
     """
     Module 7 Master Coordinator:
@@ -49,6 +54,58 @@ class PowerPreEqualizationEngine:
             max_gain_db=10.0,
             enabled=True
         )
+
+    def process_state(
+        self,
+        state: SystemState,
+        grid: SubcarrierGrid,
+        total_power_budget_w: float = 4.0,
+        per_led_max_power_w: Optional[Dict[int, float]] = None,
+        localization_reserve_w: float = 0.1,
+        power_mode: str = "EQUAL_POWER",
+        pre_eq_mode: str = "REGULARIZED",
+        frequency_plan: Optional[Any] = None
+    ) -> SystemState:
+        """
+        SystemState-aware entry point for Module 7.
+
+        Reads:
+            ``state.adaptive_alloc`` — rho, modulation map (Module 6 SSOT)
+            ``state.physics``        — optical gains, noise variances (Module 2 SSOT)
+
+        Writes:
+            ``state.power`` — power matrix, pre-EQ coefficients, predicted SNR/BER (owned by Module 7)
+
+        Module 7 NEVER recomputes rho or modulation order — those belong to Module 6.
+        Module 7 NEVER recomputes the optical channel gain — that belongs to Module 2.
+
+        Args:
+            state:                SystemState with adaptive_alloc and physics populated.
+            grid:                 SubcarrierGrid (frequency plan, FFT size).
+            total_power_budget_w: Combined power budget across all LEDs (W).
+            per_led_max_power_w:  Per-LED power ceiling overrides.
+            localization_reserve_w: Power reserved per LED for localization tones (W).
+            power_mode:           "EQUAL_POWER" or "WATER_FILLING".
+            pre_eq_mode:          "NONE", "ZERO_FORCING", "REGULARIZED", "PAPER_WEIGHTED".
+            frequency_plan:       Optional localization frequency plan.
+
+        Returns:
+            The same SystemState with ``state.power`` updated.
+        """
+        alloc = state.require_adaptive_alloc()
+        phys = state.require_physics()
+        state.power = self.process_power_and_preeq(
+            allocation_decision=alloc,
+            physics_state=phys,
+            grid=grid,
+            total_power_budget_w=total_power_budget_w,
+            per_led_max_power_w=per_led_max_power_w,
+            localization_reserve_w=localization_reserve_w,
+            power_mode=power_mode,
+            pre_eq_mode=pre_eq_mode,
+            frequency_plan=frequency_plan
+        )
+        return state
 
     def process_power_and_preeq(
         self,

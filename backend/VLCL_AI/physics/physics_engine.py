@@ -20,6 +20,10 @@ from VLCL_AI.physics.signal import convert_optical_to_electrical
 from VLCL_AI.physics.channel_estimator import ChannelEstimator
 from VLCL_AI.physics.raytracer import RayTracer
 
+# SystemState import — used by new compute_state() entry point.
+# PhysicsEngine OWNS state.physics; it reads state.environment (Module 1 output).
+from VLCL_AI.system_state import SystemState
+
 @dataclass(frozen=True)
 class PhysicsState:
     """Immutable physics state calculated per simulation frame."""
@@ -88,9 +92,32 @@ class PhysicsEngine:
         self.channel_estimator = ChannelEstimator()
         self.last_state: Optional[PhysicsState] = None
 
+    def compute_state(self, state: SystemState) -> SystemState:
+        """
+        SystemState-aware entry point for Module 2.
+
+        Reads ``state.environment`` (owned by Module 1) and writes the computed
+        optical physics result to ``state.physics``.
+
+        Module 2 OWNS ``state.physics``; no other module may write to it.
+
+        Args:
+            state: SystemState with ``state.environment`` populated by Module 1.
+
+        Returns:
+            The same SystemState with ``state.physics`` updated.
+        """
+        env_state = state.require_environment()
+        state.physics = self.compute(env_state)
+        return state
+
     def compute(self, env_state: EnvironmentState) -> PhysicsState:
         """
-        Executes the full optical & optoelectronic propagation logic using EnvironmentState.
+        [LEGACY / internal] Executes the full optical & optoelectronic propagation logic
+        using EnvironmentState.
+
+        Preserved as a public method for backward compatibility and as the internal
+        implementation called by ``compute_state()``. In new code, prefer ``compute_state()``.
 
         PHASE C fixes applied:
         - M2-PHY-001: angles received in radians (M1-ENV-ANGLE-001 fixed source)
@@ -267,7 +294,10 @@ class PhysicsEngine:
         return state
 
     def step(self, env_state: EnvironmentState) -> PhysicsState:
-        """Alias for compute() as required by step execution API."""
+        """
+        [LEGACY] Alias for compute(). Preserved for backward compatibility.
+        In new code use ``compute_state(state)``.
+        """
         return self.compute(env_state)
 
     def get_channel(self) -> np.ndarray:

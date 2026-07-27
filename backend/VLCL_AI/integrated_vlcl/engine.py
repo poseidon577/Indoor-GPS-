@@ -41,11 +41,13 @@ class IntegratedVLCLEngine:
         self,
         config_path: Optional[str] = None,
         grid: Optional[SubcarrierGrid] = None,
-        plan: Optional[LocalizationFrequencyPlan] = None
+        plan: Optional[LocalizationFrequencyPlan] = None,
+        num_leds: int = 4
     ):
         self.config_path = config_path
         self.custom_grid = grid
         self.custom_plan = plan
+        self.num_leds = num_leds
         
         # 1. Load Configurations
         self.comm_config = CommunicationConfig(config_path)
@@ -58,6 +60,16 @@ class IntegratedVLCLEngine:
                 self.loc_config = LocalizationConfig()
         else:
             self.loc_config = LocalizationConfig()
+            
+        # Dynamically map tones to available LEDs if num_leds is different from 4
+        if self.num_leds != 4:
+            new_map = {}
+            for t in range(1, 6):
+                new_map[t] = [min(t, self.num_leds)]
+            # ensure tone 5 is different if possible
+            if self.num_leds >= 1:
+                new_map[5] = [1]
+            self.loc_config.tone_to_led_map = new_map
             
         self.initialize()
 
@@ -101,7 +113,7 @@ class IntegratedVLCLEngine:
         self.partitioner = SpectrumPartitioner(
             grid=self.grid,
             frequency_plan=self.plan,
-            num_comm_groups=self.loc_config.fp_count - 1, # e.g. 4 communication groups
+            num_comm_groups=max(1, self.num_leds), # create enough comm groups
             guard_width=1
         )
         
@@ -112,7 +124,7 @@ class IntegratedVLCLEngine:
 
         self.power_mapper = MultiLedPowerMapper(
             partitioner=self.partitioner,
-            num_leds=4,
+            num_leds=self.num_leds,
             default_comm_power=1.0,
             default_loc_power=self.loc_config.default_tone_power,
             tone_to_led_map=self.loc_config.tone_to_led_map,

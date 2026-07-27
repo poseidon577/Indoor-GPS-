@@ -1,0 +1,11 @@
+{
+    "Environment": "Implemented",
+    "Physics": "Implemented",
+    "Communication": "Implemented",
+    "Localization": "Implemented",
+    "Spectrum Management": "Unused",
+    "Adaptive Modulation": "Placeholder",
+    "Power Optimization": "Placeholder",
+    "Joint Optimization": "Placeholder",
+    "Validation": "Implemented"
+}

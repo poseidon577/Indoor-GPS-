@@ -809,22 +809,44 @@ try:
     config = AdaptiveConfig(ber_max=ber_max, mode=mode, fft_size=fft_size, total_bandwidth_hz=20.0e6)
     grid = SubcarrierGrid(fft_size=fft_size, total_bandwidth=20.0e6)
 
-    # Step 3: Build SNR matrix
+    from VLCL_AI.communication.snr import compute_communication_snr
+    from VLCL_AI.communication.led_frequency_response import LEDFrequencyResponse
+    from VLCL_AI.physics.constants import DEFAULT_RESPONSIVITY
+
+    # Step 3: Build per-subcarrier SNR matrix using actual optical channel model
+    # BUG FIX: was using physics_state.snrs (single broadband scalar) with an overly
+    # aggressive rolloff. Now uses compute_communication_snr with actual optical gains
+    # and the LED frequency response model — consistent with how power_engine.py computes BER.
     device_ids = list(range(1, num_devices + 1))
     snr_matrix = np.zeros((num_devices, fft_size), dtype=float)
-    freq_axis = np.array([n * (20.0e6 / fft_size) for n in range(fft_size)])
+    freq_axis = np.array([n * grid.subcarrier_spacing for n in range(fft_size)])
+    led_response = LEDFrequencyResponse(model_type="first_order", cutoff_frequency_hz=10.0e6)
 
     for k_idx, led_id in enumerate(device_ids):
-        snr_db = physics_state.snrs.get(led_id, 0.0)
-        snr_linear = 10.0 ** (snr_db / 10.0)
-        rolloff = 1.0 / (1.0 + (freq_axis / 20.0e6) ** 2)
-        snr_matrix[k_idx, :] = snr_linear * rolloff
-        snr_matrix[k_idx, 0] = 0.0
+        opt_gain = physics_state.total_gains.get(led_id, 1e-6)
+        noise_var = physics_state.noise_variances.get(led_id, 1e-12)
+        # Build per-subcarrier channel gains including LED frequency rolloff
+        channel_gains = np.zeros((num_devices, fft_size), dtype=float)
+        for n in range(fft_size):
+            channel_gains[k_idx, n] = opt_gain * led_response.magnitude(freq_axis[n])
+        # 1 W seed power for SNR estimation (same as BOOTSTRAP_POWER_W in integrated engine)
+        seed_powers = np.ones((fft_size, num_devices), dtype=float)
+        snr_k = compute_communication_snr(
+            responsivity=DEFAULT_RESPONSIVITY,
+            subcarrier_powers=seed_powers,
+            channel_gains=channel_gains,
+            noise_variance=noise_var
+        )
+        snr_k[0] = 0.0  # Zero DC subcarrier
+        snr_matrix[k_idx, :] = snr_k
 
     # Step 4: Run Module 6
+    # BUG FIX: was using list comprehension with closure over k_idx — the comprehension
+    # captured the final value of k_idx (= num_devices-1), giving every device the same
+    # (last) SNR row. Now uses explicit indexing.
     feedbacks = [
-        ChannelFeedback(device_id=dev_id, snr_per_subcarrier=snr_matrix[k_idx, :], requested_min_rate_bps=min_rate_bps)
-        for k_idx, dev_id in enumerate(device_ids)
+        ChannelFeedback(device_id=dev_id, snr_per_subcarrier=snr_matrix[idx, :], requested_min_rate_bps=min_rate_bps)
+        for idx, dev_id in enumerate(device_ids)
     ]
     adaptive_engine = AdaptiveTransmissionEngine(config=config)
     decision = adaptive_engine.allocate_resources(feedbacks=feedbacks, grid=grid)

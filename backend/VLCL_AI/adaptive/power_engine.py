@@ -296,7 +296,13 @@ class PowerPreEqualizationEngine:
             predicted_ber=predicted_ber,
             modulation_feasible=modulation_feasible,
             nominal_sum_rate_bps=allocation_decision.sum_rate_bps,
-            feasible_sum_rate_bps=allocation_decision.sum_rate_bps if all(modulation_feasible.values()) else 0.0,
+            # BUG FIX: Sum achievable rates only for devices where modulation is feasible, 
+            # instead of collapsing to 0 if any single device fails.
+            feasible_sum_rate_bps=sum(
+                allocation_decision.achievable_rates_bps.get(dev_id, 0.0)
+                for dev_id, is_feasible in modulation_feasible.items()
+                if is_feasible
+            ),
             warnings=[],
             constraint_violations=[]
         )

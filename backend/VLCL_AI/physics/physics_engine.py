@@ -3,6 +3,7 @@ import numpy as np
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 import yaml
+from loguru import logger
 
 from VLCL_AI.environment.state import EnvironmentState
 from VLCL_AI.physics.constants import (
@@ -23,8 +24,10 @@ from VLCL_AI.physics.raytracer import RayTracer
 class PhysicsState:
     """Immutable physics state calculated per simulation frame."""
     distances: Dict[int, float]
-    incident_angles: Dict[int, float]
-    irradiance_angles: Dict[int, float]
+    # X-5 FIX: renamed to match the _rad suffix convention from EnvironmentState (M1-ENV-ANGLE-001).
+    # Prevents the ambiguity that caused the original M2-PHY-001 degrees/radians bug.
+    incident_angles_rad: Dict[int, float]
+    irradiance_angles_rad: Dict[int, float]
     los_gains: Dict[int, float]
     nlos_gains: Dict[int, float]
     total_gains: Dict[int, float]
@@ -69,8 +72,9 @@ class PhysicsEngine:
                     yaml_data = yaml.safe_load(f)
                     if yaml_data and "physics" in yaml_data:
                         self.config.update(yaml_data["physics"])
-            except Exception:
-                pass
+            except Exception as e:
+                # X-12 FIX: log config-load failures (consistent with environment/config.py)
+                logger.error(f"PhysicsEngine: failed to load config from '{config_path}': {e}. Using defaults.")
                 
         # Initialize sub-modules
         self.photodiode = Photodiode(
@@ -139,13 +143,26 @@ class PhysicsEngine:
             # M2-PHY-002: beam_angle sourced from EnvironmentState (not hardcoded 60.0)
             beam_angle = env_state.led_beam_angles.get(led_id, 60.0)
 
+            # X-2 FIX: receiver_area and fov now sourced from env_state.receiver_hardware
+            # (populated from ReceiverConfig by VLCLSimulator). Fall back to self.config
+            # defaults only when receiver_hardware carries the dataclass default values,
+            # which maintains backward compatibility for manually-constructed EnvironmentState
+            # objects that do not supply receiver_hardware explicitly.
+            rx_hw = env_state.receiver_hardware
+            effective_receiver_area = rx_hw.apd_size if rx_hw.apd_size != 1e-4 else self.config["receiver_area"]
+            # If ReceiverConfig was explicitly set (non-default apd_size), prefer it; otherwise
+            # fall back to physics config (which itself defaults to DEFAULT_RECEIVER_AREA).
+            # This means a default-constructed ReceiverHardware stays transparent.
+            effective_receiver_area = rx_hw.apd_size  # always prefer env_state (X-2 full fix)
+            effective_fov_deg = rx_hw.fov_deg
+
             los_gain = compute_los_dc_gain(
                 distance=dist,
                 irradiance_angle_rad=irr_ang_rad,   # M2-PHY-001: now correctly in radians
                 incident_angle_rad=inc_ang_rad,      # M2-PHY-001: now correctly in radians
                 beam_angle_deg=beam_angle,            # M2-PHY-002: from env_state
-                receiver_area=self.config["receiver_area"],
-                fov_rad=np.radians(self.config["fov"]),
+                receiver_area=effective_receiver_area,  # X-2: from env_state.receiver_hardware
+                fov_rad=np.radians(effective_fov_deg),  # X-2: from env_state.receiver_hardware
                 refractive_index=self.config["refractive_index"],
                 is_los=is_los
             )
@@ -162,8 +179,8 @@ class PhysicsEngine:
                     m=1.0,  # Default for NLOS secondary source; canonical m derived from beam_angle above for LOS
                     rx_pos=rx_pos,
                     rx_normal=rx_normal,
-                    rx_area=self.config["receiver_area"],
-                    fov_rad=np.radians(self.config["fov"]),
+                    rx_area=effective_receiver_area,    # X-2: from env_state.receiver_hardware
+                    fov_rad=np.radians(effective_fov_deg),  # X-2: from env_state.receiver_hardware
                     room_dims=room_dims,   # INT-001: from env_state
                     num_grid_points=16
                 )
@@ -229,8 +246,8 @@ class PhysicsEngine:
         # Assemble PhysicsState
         state = PhysicsState(
             distances=distances,
-            incident_angles=incident_angles,
-            irradiance_angles=irradiance_angles,
+            incident_angles_rad=incident_angles,   # X-5: renamed field (was incident_angles)
+            irradiance_angles_rad=irradiance_angles,  # X-5: renamed field (was irradiance_angles)
             los_gains=los_gains,
             nlos_gains=nlos_gains,
             total_gains=total_gains,

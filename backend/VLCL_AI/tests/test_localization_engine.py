@@ -237,8 +237,8 @@ class TestLocalizationEngine(unittest.TestCase):
             led_beam_angles=env_state.led_beam_angles,
             distances=physics_state.distances,
             # M1-ENV-ANGLE-001: angles now stored in _rad fields
-            incident_angles_rad=physics_state.incident_angles,
-            irradiance_angles_rad=physics_state.irradiance_angles,
+            incident_angles_rad=physics_state.incident_angles_rad,
+            irradiance_angles_rad=physics_state.irradiance_angles_rad,
             # M1-ENV-002: dc_gains removed — use physics_state.los_gains directly
             visibility_matrix={k: (v > 0.0) for k, v in physics_state.los_gains.items()},
             los_matrix={k: (v > 0.0) for k, v in physics_state.los_gains.items()},

@@ -57,12 +57,14 @@ def main():
             led_powers={1: led.power},
             led_active={1: led.active},
             distances=metrics["distances"],
-            incident_angles=metrics["incident_angles"],
-            irradiance_angles=metrics["irradiance_angles"],
-            dc_gains=metrics["dc_gains"],
+            incident_angles_rad=metrics["incident_angles_rad"],
+            irradiance_angles_rad=metrics["irradiance_angles_rad"],
+            led_orientations=metrics["led_orientations"],
+            led_beam_angles=metrics["led_beam_angles"],
             visibility_matrix=metrics["visibility_matrix"],
             los_matrix=metrics["los_matrix"],
             blocking_obstacles=metrics["blocking_obstacles"],
+            room_dims=[5.0, 5.0, 3.0],
             obstacles=[]
         )
         

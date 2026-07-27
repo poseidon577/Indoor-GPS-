@@ -13,7 +13,7 @@ DEFAULT_REFRACTIVE_INDEX = 1.5  # Refractive index of optical concentrator
 
 # Photodiode / APD Constants
 DEFAULT_RESPONSIVITY = 0.54  # A/W
-DEFAULT_RECEIVER_AREA = 1e-4  # m^2 (1 cm^2 or 1 mm^2, here 1e-4 m^2 is 1 cm^2)
+DEFAULT_RECEIVER_AREA = 1e-4  # m^2 (1 cm^2 = 1e-4 m^2; note: 1 mm^2 = 1e-6 m^2, which is different)
 DEFAULT_DARK_CURRENT = 1e-9  # A (Dark current of photodiode)
 DEFAULT_CAPACITANCE = 5e-12  # F (Photodiode junction capacitance)
 DEFAULT_BANDWIDTH = 20e6  # Hz (20 MHz)

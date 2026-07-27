@@ -15,6 +15,7 @@ from VLCL_AI.adaptive.power_decision import PowerDecision
 from VLCL_AI.adaptive.water_filling import WaterFillingAllocator
 from VLCL_AI.adaptive.transfer_function import TransferFunctionMatrix
 from VLCL_AI.physics.physics_engine import PhysicsState
+from VLCL_AI.physics.constants import DEFAULT_RESPONSIVITY
 
 class PowerPreEqualizationEngine:
     """
@@ -29,15 +30,18 @@ class PowerPreEqualizationEngine:
         self,
         config: Optional[AdaptiveConfig] = None,
         led_responses: Optional[Dict[int, LEDFrequencyResponse]] = None,
-        pre_equalizer: Optional[PreEqualizer] = None
+        pre_equalizer: Optional[PreEqualizer] = None,
+        num_leds: Optional[int] = None  # X-1 FIX: explicit param; None = defer to physics_state at process time
     ):
         self.config = config or AdaptiveConfig()
         
-        # Default 4-LED array responses
-        self.num_leds = 4
+        # X-1 FIX: num_leds is now an explicit constructor parameter.
+        # If not supplied (None), it will be derived from the physics_state topology at
+        # process_power_and_preeq() time. The old silent default of 4 is gone.
+        self.num_leds = num_leds  # may be None until first call
         self.led_responses = led_responses or {
             i: LEDFrequencyResponse(model_type="first_order", cutoff_frequency_hz=10e6)
-            for i in range(1, self.num_leds + 1)
+            for i in range(1, (num_leds or 4) + 1)  # fallback to 4 only for default led_responses
         }
         self.pre_equalizer = pre_equalizer or PreEqualizer(
             mode="regularized",
@@ -79,6 +83,16 @@ class PowerPreEqualizationEngine:
         rho = allocation_decision.rho  # Shape: (K, N)
         device_ids = list(allocation_decision.achievable_rates_bps.keys()) if allocation_decision.achievable_rates_bps else [k + 1 for k in range(rho.shape[0])]
         K = len(device_ids)
+
+        # X-1 FIX: resolve num_leds from physics_state topology if not set at construction time.
+        # physics_state.total_gains.keys() is authoritative for which LEDs actually exist.
+        if self.num_leds is None:
+            self.num_leds = len(physics_state.total_gains)
+            # Expand led_responses to cover new LED ids if needed
+            for led_id in physics_state.total_gains.keys():
+                if led_id not in self.led_responses:
+                    self.led_responses[led_id] = LEDFrequencyResponse(model_type="first_order", cutoff_frequency_hz=10e6)
+        actual_num_leds = self.num_leds
         
         # 1. Setup per-LED power ceilings and localization reserves
         led_ceilings = per_led_max_power_w or {
@@ -140,8 +154,8 @@ class PowerPreEqualizationEngine:
                     unit_powers = np.zeros((N, self.num_leds))
                     unit_powers[:, led_idx] = 1.0  # 1 Watt test signal
                     
-                    unit_snrs = compute_communication_snr(
-                        responsivity=0.53,
+                    snr_k = compute_communication_snr(
+                        responsivity=DEFAULT_RESPONSIVITY,  # X-3 FIX: constant (was 0.53 — inconsistent!)
                         subcarrier_powers=unit_powers,
                         channel_gains=channel_gains,
                         noise_variance=noise_var
@@ -149,7 +163,7 @@ class PowerPreEqualizationEngine:
                     
                     # Distribute half budget to positive carriers (symmetric negative gets equal share)
                     p_pos = WaterFillingAllocator.allocate_power(
-                        unit_snrs=unit_snrs,
+                        unit_snrs=snr_k,
                         p_budget=p_comm_avail / 2.0,
                         allocatable_mask=pos_mask
                     )
@@ -202,7 +216,7 @@ class PowerPreEqualizationEngine:
             noise_var = physics_state.noise_variances.get(led_id, 1e-12)
             
             snr_k = compute_communication_snr(
-                responsivity=0.53,
+                responsivity=DEFAULT_RESPONSIVITY,  # X-3 FIX: constant (was 0.53 — inconsistent!)
                 subcarrier_powers=powers_tx,
                 channel_gains=channel_gains,
                 noise_variance=noise_var

@@ -2,7 +2,7 @@ import time
 from typing import Dict, Any, List, Callable
 from loguru import logger
 
-from .state import EnvironmentState
+from .state import EnvironmentState, ReceiverHardware
 from .scene import Scene
 from .mobility import MobilityEngine
 # NOTE: PhysicsEngine import removed (M1-ENV-001) — Module 1 does not own physics.
@@ -143,6 +143,18 @@ class VLCLSimulator:
         metrics = self.scene.get_geometric_metrics()
 
         # 3. Form and return the immutable EnvironmentState snapshot (geometry only)
+        # X-1 SSOT: derive topology from the authoritative Scene object
+        _led_positions = {led_id: led.position.tolist() for led_id, led in self.scene.led_array.leds.items()}
+        _led_ids = sorted(_led_positions.keys())
+
+        # X-2 SSOT: propagate receiver hardware from the authoritative Receiver object
+        _rx_hw = ReceiverHardware(
+            apd_size=self.scene.receiver.apd_size,
+            fov_deg=self.scene.receiver.fov,
+            noise=self.scene.receiver.noise,
+            gain=self.scene.receiver.gain
+        )
+
         state = EnvironmentState(
             current_time=self.clock.simulation_time,
             frame_index=self.clock.frame_index,
@@ -158,7 +170,7 @@ class VLCLSimulator:
                 "yaw": self.scene.receiver.yaw
             },
 
-            led_positions={led_id: led.position.tolist() for led_id, led in self.scene.led_array.leds.items()},
+            led_positions=_led_positions,
             led_powers={led_id: led.power for led_id, led in self.scene.led_array.leds.items()},
             led_active={led_id: led.active for led_id, led in self.scene.led_array.leds.items()},
 
@@ -179,7 +191,14 @@ class VLCLSimulator:
             # INT-001: room dimensions from Scene.room
             room_dims=[self.scene.room.width, self.scene.room.length, self.scene.room.height],
 
-            obstacles=[obs.to_dict() for obs in self.scene.obstacles.values()]
+            obstacles=[obs.to_dict() for obs in self.scene.obstacles.values()],
+
+            # X-1 SSOT: LED topology derived here — never hardcoded in downstream modules
+            num_leds=len(_led_ids),
+            led_ids=_led_ids,
+
+            # X-2 SSOT: receiver hardware propagated from ReceiverConfig through Receiver object
+            receiver_hardware=_rx_hw
         )
 
         return state
@@ -195,6 +214,16 @@ class VLCLSimulator:
         has been REMOVED. Physics is NOT performed inside Module 1.
         """
         metrics = self.scene.get_geometric_metrics()
+        # X-1 SSOT: derive topology from the authoritative Scene object
+        _led_positions = {lid: led.position.tolist() for lid, led in self.scene.led_array.leds.items()}
+        _led_ids = sorted(_led_positions.keys())
+        # X-2 SSOT: propagate receiver hardware
+        _rx_hw = ReceiverHardware(
+            apd_size=self.scene.receiver.apd_size,
+            fov_deg=self.scene.receiver.fov,
+            noise=self.scene.receiver.noise,
+            gain=self.scene.receiver.gain
+        )
         return EnvironmentState(
             current_time=self.clock.simulation_time,
             frame_index=self.clock.frame_index,
@@ -204,7 +233,7 @@ class VLCLSimulator:
             receiver_velocity=self.scene.receiver.velocity.tolist(),
             receiver_acceleration=self.scene.receiver.acceleration.tolist(),
             receiver_angles={"roll": self.scene.receiver.roll, "pitch": self.scene.receiver.pitch, "yaw": self.scene.receiver.yaw},
-            led_positions={lid: led.position.tolist() for lid, led in self.scene.led_array.leds.items()},
+            led_positions=_led_positions,
             led_powers={lid: led.power for lid, led in self.scene.led_array.leds.items()},
             led_active={lid: led.active for lid, led in self.scene.led_array.leds.items()},
             # INT-001
@@ -220,7 +249,12 @@ class VLCLSimulator:
             blocking_obstacles=metrics["blocking_obstacles"],
             # INT-001
             room_dims=[self.scene.room.width, self.scene.room.length, self.scene.room.height],
-            obstacles=[obs.to_dict() for obs in self.scene.obstacles.values()]
+            obstacles=[obs.to_dict() for obs in self.scene.obstacles.values()],
+            # X-1 SSOT
+            num_leds=len(_led_ids),
+            led_ids=_led_ids,
+            # X-2 SSOT
+            receiver_hardware=_rx_hw
         )
         # M1-ENV-001: Removed dead code that was here (self.physics.compute / replace).
         # Physics is performed by the caller, not by Module 1's VLCLSimulator.

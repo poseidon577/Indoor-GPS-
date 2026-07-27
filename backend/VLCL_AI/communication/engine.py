@@ -5,6 +5,7 @@ from loguru import logger
 
 from VLCL_AI.environment.state import EnvironmentState
 from VLCL_AI.physics.physics_engine import PhysicsState
+from VLCL_AI.physics.constants import DEFAULT_RESPONSIVITY
 from VLCL_AI.communication.config import CommunicationConfig
 from VLCL_AI.communication.bit_generator import BitGenerator
 from VLCL_AI.communication.qam import QAMModem
@@ -120,12 +121,14 @@ class CommunicationEngine:
         )
         
         # Customizable Resource Matrices (for optimization in future modules)
-        # Defaults
+        # Defaults — n_leds is derived dynamically from EnvironmentState at step() time (X-1 SSOT fix).
+        # We initialise to 4 here only as a startup placeholder; the matrix is resized in
+        # transmit_receive() whenever env_state.num_leds differs from the current allocation.
         self.n_subcarriers = self.grid.fft_size
-        self.n_leds = 4  # Default ceiling LEDs count
+        self.n_leds = 0  # 0 = uninitialised; set from env_state.num_leds on first step
         
-        # shape: (n_subcarriers, n_leds)
-        self.subcarrier_powers = np.ones((self.n_subcarriers, self.n_leds)) / self.n_leds
+        # shape: (n_subcarriers, n_leds) — will be (re-)allocated on first transmit_receive() call
+        self.subcarrier_powers = None  # lazy-init
         self.modulation_orders = np.full(self.n_subcarriers, cfg["modulation"]["default_order"], dtype=int)
         self.subcarrier_bandwidths = np.full(self.n_subcarriers, cfg["bandwidth_hz"] / self.n_subcarriers)
         self.subcarrier_assignments = {k: 1 for k in range(self.n_subcarriers)}  # User 1 by default
@@ -189,6 +192,22 @@ class CommunicationEngine:
         """Executes full transmission, physical channel propagation, and reception."""
         if not self.config.get("enabled"):
             raise VLCLCommunicationError("Communication engine is disabled.")
+
+        # X-1 SSOT: derive LED count and ids from the authoritative EnvironmentState.
+        # num_leds is set by VLCLSimulator from the actual scene; never assume 4.
+        num_leds = environment_state.num_leds if environment_state.num_leds > 0 else len(environment_state.led_positions)
+        led_ids = environment_state.led_ids if environment_state.led_ids else sorted(environment_state.led_positions.keys())
+
+        # Resize subcarrier_powers matrix if LED count has changed (first call or topology change)
+        if self.subcarrier_powers is None or self.n_leds != num_leds:
+            old_powers = self.subcarrier_powers
+            self.subcarrier_powers = np.ones((self.n_subcarriers, num_leds)) / max(num_leds, 1)
+            if old_powers is not None and num_leds > 0:
+                # Preserve existing allocations up to min(old, new) LED count
+                cols = min(old_powers.shape[1], num_leds)
+                self.subcarrier_powers[:, :cols] = old_powers[:, :cols]
+            self.n_leds = num_leds
+            logger.debug(f"CommunicationEngine: resized subcarrier_powers to ({self.n_subcarriers}, {num_leds}) for {num_leds} LEDs")
             
         # Determine active LED (closest or sum)
         # For simplicity, we select the LED with the highest optical power at the receiver
@@ -235,13 +254,20 @@ class CommunicationEngine:
         
         # 5. Metrics Calculations
         # Channel gain array (N_leds x N_subcarriers)
-        # For simplicity of per-subcarrier SNR formulas, we broadcast the LED gains
+        # X-1 FIX: iterate over actual LED ids from env_state, not assumed contiguous 1..n_leds.
+        # Previously: for l_idx in range(self.n_leds): led_key = l_idx + 1  ← silent mismatch
+        # Now: use the actual led_id from the scene topology directly.
         channel_gains_sc = np.zeros((self.n_leds, self.n_subcarriers))
-        for l_idx in range(self.n_leds):
-            led_key = l_idx + 1
-            opt_gain = physics_state.total_gains.get(led_key, 0.0)
+        for l_idx, led_id in enumerate(led_ids):
+            opt_gain = physics_state.total_gains.get(led_id, 0.0)
             channel_gains_sc[l_idx, :] = opt_gain
             
+        # X-3 FIX: use DEFAULT_RESPONSIVITY constant instead of magic literal 0.54
+        responsivity = (
+            self.config.config["physics"].get("responsivity", DEFAULT_RESPONSIVITY)
+            if "physics" in self.config.config
+            else DEFAULT_RESPONSIVITY
+        )
         metrics = self.metrics_orchestrator.calculate_all(
             tx_bits=tx_frame.payload_bits,
             rx_bits=recovered_bits,
@@ -253,7 +279,7 @@ class CommunicationEngine:
             pilot_indices=self.grid.get_pilot_indices(),
             cp_ratio=self.config.get("cyclic_prefix_ratio"),
             physics_state=physics_state,
-            responsivity=self.config.config["physics"].get("responsivity", 0.54) if "physics" in self.config.config else 0.54,
+            responsivity=responsivity,
             subcarrier_powers=self.subcarrier_powers,
             channel_gains=channel_gains_sc,
             noise_variance=noise_var,
@@ -272,7 +298,8 @@ class CommunicationEngine:
             frequency_grid=tx_frame.frequency_symbols,
             active_subcarriers=active_sc_indices,
             subcarrier_bandwidths=self.subcarrier_bandwidths,
-            subcarrier_powers=self.subcarrier_powers[:, active_led_id - 1] if active_led_id <= self.subcarrier_powers.shape[1] else self.subcarrier_powers[:, 0],
+            # B-2 FIX: use scene-order index of active_led_id within led_ids, not assumed id-1
+            subcarrier_powers=self.subcarrier_powers[:, led_ids.index(active_led_id)] if active_led_id in led_ids else self.subcarrier_powers[:, 0],
             subcarrier_assignments=self.subcarrier_assignments,
             modulation_orders=self.modulation_orders,
             channel_response=h_channel,

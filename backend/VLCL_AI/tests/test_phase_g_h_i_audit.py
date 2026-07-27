@@ -180,8 +180,8 @@ class TestM3PhaseF_NoiseSeed(unittest.TestCase):
         from VLCL_AI.physics.physics_engine import PhysicsState
         return PhysicsState(
             distances={1: 2.0},
-            incident_angles={1: 0.0},
-            irradiance_angles={1: 0.0},
+            incident_angles_rad={1: 0.0},
+            irradiance_angles_rad={1: 0.0},
             los_gains={1: 1e-4},
             nlos_gains={1: 0.0},
             total_gains={1: 1e-4},

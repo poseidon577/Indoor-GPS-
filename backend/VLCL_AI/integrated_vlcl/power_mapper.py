@@ -90,3 +90,25 @@ class MultiLedPowerMapper:
     def get_power_matrix(self) -> np.ndarray:
         """Returns the full (num_leds, fft_size) power matrix."""
         return self.power_matrix
+
+    def set_power_matrix(self, matrix: np.ndarray) -> None:
+        """
+        Sets the full power matrix with shape validation.
+
+        §10 FIX: replaces the pattern of direct external attribute mutation
+        (power_mapper.power_matrix = ...) with an encapsulated accessor that
+        validates the shape invariant (num_leds, fft_size) before accepting the update.
+
+        Args:
+            matrix: np.ndarray of shape (num_leds, fft_size).
+
+        Raises:
+            ValueError: if the matrix shape does not match (num_leds, fft_size).
+        """
+        expected = (self.num_leds, self.partitioner.grid.fft_size)
+        if matrix.shape != expected:
+            raise ValueError(
+                f"set_power_matrix: expected shape {expected}, got {matrix.shape}. "
+                f"num_leds={self.num_leds}, fft_size={self.partitioner.grid.fft_size}."
+            )
+        self.power_matrix = matrix

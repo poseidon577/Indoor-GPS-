@@ -1,9 +1,11 @@
 # engine.py
 import numpy as np
 from typing import Dict, Any, Tuple, Optional, List
+from loguru import logger
 
 from VLCL_AI.environment.state import EnvironmentState
 from VLCL_AI.physics.physics_engine import PhysicsState
+from VLCL_AI.physics.constants import DEFAULT_RESPONSIVITY
 
 from VLCL_AI.communication.config import CommunicationConfig
 from VLCL_AI.communication.bit_generator import BitGenerator
@@ -31,6 +33,11 @@ from VLCL_AI.adaptive.power_decision import PowerDecision
 from VLCL_AI.adaptive.decision import AllocationDecision
 from VLCL_AI.communication.snr import compute_communication_snr
 
+# A-4/A-5 FIX: name the bootstrap/assumption constants so they are visible,
+# configurable, and don't look like real system parameters.
+BOOTSTRAP_POWER_W: float = 1.0       # Seed SNR estimation power (1 W uniform, not the operating point)
+DEFAULT_MIN_RATE_BPS: float = 1.0e6  # QoS floor for adaptive allocation (1 Mbps per device)
+
 class IntegratedVLCLEngine:
     """
     Unified Master Coordinator for the Integrated VLCL Spectrum & Signal-Group Engine (Module 5).
@@ -56,7 +63,9 @@ class IntegratedVLCLEngine:
         if config_path:
             try:
                 self.loc_config = LocalizationConfig.from_yaml(config_path)
-            except Exception:
+            except Exception as e:
+                # X-12 FIX: log config-load failures (consistent with environment/config.py)
+                logger.error(f"IntegratedVLCLEngine: failed to load LocalizationConfig from '{config_path}': {e}. Using defaults.")
                 self.loc_config = LocalizationConfig()
         else:
             self.loc_config = LocalizationConfig()
@@ -232,25 +241,31 @@ class IntegratedVLCLEngine:
         """
         # Module 6 Adaptive Integration
         if adaptive_mode and allocation_decision is None:
+            # X-1 SSOT: derive num_leds from the authoritative EnvironmentState — never use
+            # self.num_leds (constructor default), which may differ from the live scene topology.
+            num_leds = env_state.num_leds if env_state.num_leds > 0 else len(env_state.led_positions)
+
             # Estimate SNR per LED / subcarrier
-            num_leds = self.power_mapper.num_leds
             N = self.grid.fft_size
             snr_matrix = np.zeros((num_leds, N), dtype=float)
             
             for k in range(num_leds):
-                led_id = k + 1
+                led_id = list(env_state.led_positions.keys())[k]  # use actual led_id
                 gains = np.ones((num_leds, N)) * physics_state.total_gains.get(led_id, 1e-3)
-                powers = np.ones((N, num_leds)) * 1.0
+                # A-4 FIX: BOOTSTRAP_POWER_W is a seed value for SNR estimation, not the operating point.
+                # The actual operating power comes from the power budget in Module 7.
+                powers = np.ones((N, num_leds)) * BOOTSTRAP_POWER_W
                 noise_var = physics_state.noise_variances.get(led_id, 1e-12)
                 snr_matrix[k, :] = compute_communication_snr(
-                    responsivity=0.54,
+                    responsivity=DEFAULT_RESPONSIVITY,  # X-3 FIX: use constant
                     subcarrier_powers=powers,
                     channel_gains=gains,
                     noise_variance=noise_var
                 )
                 
             dev_ids = list(range(1, num_leds + 1))
-            min_rates = {dev_id: 1.0e6 for dev_id in dev_ids}
+            # A-5 FIX: DEFAULT_MIN_RATE_BPS is a named constant, not a magic literal 1.0e6
+            min_rates = {dev_id: DEFAULT_MIN_RATE_BPS for dev_id in dev_ids}
             allocation_decision = self.adaptive_engine.allocate_from_snr_matrix(
                 snr_matrix=snr_matrix,
                 device_ids=dev_ids,
@@ -267,7 +282,8 @@ class IntegratedVLCLEngine:
                 frequency_plan=self.plan,
                 localization_reserve_w=localization_reserve_w
             )
-            self.power_mapper.power_matrix = power_decision.power_allocation.per_subcarrier_power_matrix
+            # §10 FIX: use set_power_matrix() accessor (validates shape) instead of direct attribute mutation
+            self.power_mapper.set_power_matrix(power_decision.power_allocation.per_subcarrier_power_matrix)
 
         # Determine modulation orders and bits
         if allocation_decision is not None and hasattr(allocation_decision, "modulation_map"):

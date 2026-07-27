@@ -20,8 +20,8 @@ def make_mock_physics_state(gains=None, noise=None):
     noise = noise or {1: 1e-12, 2: 1e-12, 3: 1e-12, 4: 1e-12}
     return PhysicsState(
         distances={i: 2.0 for i in range(1, 5)},
-        incident_angles={i: 0.1 for i in range(1, 5)},
-        irradiance_angles={i: 0.1 for i in range(1, 5)},
+        incident_angles_rad={i: 0.1 for i in range(1, 5)},
+        irradiance_angles_rad={i: 0.1 for i in range(1, 5)},
         los_gains=gains,
         nlos_gains={i: 0.0 for i in range(1, 5)},
         total_gains=gains,

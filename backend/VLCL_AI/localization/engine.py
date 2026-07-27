@@ -20,6 +20,9 @@ from VLCL_AI.localization.state import LocalizationState
 
 class LocalizationEngine:
     """The master coordinator for the Module 4 A-DPDOA localization subsystem."""
+
+    # X-15 FIX: cap history to prevent unbounded memory growth in long-running simulations.
+    MAX_STATES_HISTORY: int = 500
     
     def __init__(self, config_path: Optional[str] = None):
         # 1. Load configuration
@@ -68,12 +71,12 @@ class LocalizationEngine:
         self.phase_unwrapper = PhaseUnwrapper(method=self.config.ambiguity_resolution)
         
         # 6. Instantiate hardware bias model
-        # Default bias offsets if not configured: let's keep them zero-centered unless specified
-        # Unique LED IDs is typically 1,2,3,4
-        led_ids = [1, 2, 3, 4, 5]
+        # X-1 SSOT FIX: bias_model is now initialised with the actual LED ids from
+        # EnvironmentState at step() time (see step() below). Here we create a placeholder
+        # with an empty list; it is rebuilt on first step() call with real LED ids.
         self.bias_model = LocalizationBiasModel(
-            led_ids=led_ids,
-            constant_delay_bias_s=None,  # can be loaded/configured
+            led_ids=[],
+            constant_delay_bias_s=None,
             random_delay_jitter_s=0.0
         )
         
@@ -102,6 +105,17 @@ class LocalizationEngine:
         """
         self.frame_id += 1
         t_sim = environment_state.current_time
+
+        # X-1 SSOT FIX: use actual LED ids from EnvironmentState (never hardcode [1,2,3,4,5]).
+        actual_led_ids = list(environment_state.led_ids) if environment_state.led_ids else sorted(environment_state.led_positions.keys())
+
+        # Rebuild bias model if the LED topology has changed since last step
+        if set(actual_led_ids) != set(getattr(self.bias_model, 'led_ids', [])):
+            self.bias_model = LocalizationBiasModel(
+                led_ids=actual_led_ids,
+                constant_delay_bias_s=None,
+                random_delay_jitter_s=0.0
+            )
         
         # 1. Ground truth coords for error evaluation ONLY (Never leaked to solver!)
         p_true = np.array(environment_state.receiver_position)
@@ -291,6 +305,9 @@ class LocalizationEngine:
             }
         )
         
+        # X-15 FIX: cap states_history to prevent unbounded memory growth
+        if len(self.states_history) >= self.MAX_STATES_HISTORY:
+            self.states_history.pop(0)
         self.states_history.append(state_snap)
         return state_snap
 

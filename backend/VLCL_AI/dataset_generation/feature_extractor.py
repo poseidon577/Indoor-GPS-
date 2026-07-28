@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 
 
-def _safe(value: Any, default: float = 0.0) -> Any:
+def _safe(value: Any, default: float = float("nan")) -> Any:
     """Returns value if finite, else default. Handles None gracefully."""
     if value is None:
         return default
@@ -71,7 +71,7 @@ class FeatureExtractor:
     def _extract_environment(self, state: Any) -> Dict[str, Any]:
         env = state.environment
         if env is None:
-            return self._default_dict([
+            return self._nan_dict([
                 "env_room_width", "env_room_length", "env_room_height",
                 "env_wall_reflectivity", "env_floor_reflectivity", "env_ceiling_reflectivity",
                 "env_num_leds", "env_rx_x", "env_rx_y", "env_rx_z", "env_rx_fov_deg",
@@ -90,15 +90,15 @@ class FeatureExtractor:
             num_obs = len(env.obstacles)
 
         rx_hw = getattr(env, "receiver_hw", None)
-        fov = rx_hw.fov_deg if rx_hw is not None else 0.0
+        fov = rx_hw.fov_deg if rx_hw is not None else float("nan")
 
         return {
             "env_room_width":           _safe(dims[0]),
             "env_room_length":          _safe(dims[1]),
             "env_room_height":          _safe(dims[2]),
-            "env_wall_reflectivity":    _safe(getattr(env, "wall_reflectivity", 0.0)),
-            "env_floor_reflectivity":   _safe(getattr(env, "floor_reflectivity", 0.0)),
-            "env_ceiling_reflectivity": _safe(getattr(env, "ceiling_reflectivity", 0.0)),
+            "env_wall_reflectivity":    _safe(getattr(env, "wall_reflectivity", float("nan"))),
+            "env_floor_reflectivity":   _safe(getattr(env, "floor_reflectivity", float("nan"))),
+            "env_ceiling_reflectivity": _safe(getattr(env, "ceiling_reflectivity", float("nan"))),
             "env_num_leds":             _safe(env.num_leds, 0),
             "env_rx_x":                 _safe(rx[0]),
             "env_rx_y":                 _safe(rx[1]),
@@ -116,17 +116,17 @@ class FeatureExtractor:
     def _extract_physics(self, state: Any) -> Dict[str, Any]:
         phys = state.physics
         if phys is None:
-            return self._default_dict([
+            return self._nan_dict([
                 "phys_avg_snr_db", "phys_min_snr_db", "phys_max_snr_db",
                 "phys_avg_los_gain", "phys_avg_nlos_gain", "phys_avg_received_power_w",
                 "phys_avg_noise_variance", "phys_num_los_links", "phys_total_received_power_w",
             ])
 
-        snr_vals = list(phys.snrs.values()) if phys.snrs else [0.0]
-        los_vals = list(phys.los_gains.values()) if hasattr(phys, "los_gains") and phys.los_gains else [0.0]
-        nlos_vals = list(phys.nlos_gains.values()) if hasattr(phys, "nlos_gains") and phys.nlos_gains else [0.0]
-        pwr_vals = list(phys.received_powers.values()) if phys.received_powers else [0.0]
-        nv_vals = list(phys.noise_variances.values()) if phys.noise_variances else [0.0]
+        snr_vals = list(phys.snrs.values()) if phys.snrs else [float("nan")]
+        los_vals = list(phys.los_gains.values()) if hasattr(phys, "los_gains") and phys.los_gains else [float("nan")]
+        nlos_vals = list(phys.nlos_gains.values()) if hasattr(phys, "nlos_gains") and phys.nlos_gains else [float("nan")]
+        pwr_vals = list(phys.received_powers.values()) if phys.received_powers else [float("nan")]
+        nv_vals = list(phys.noise_variances.values()) if phys.noise_variances else [float("nan")]
 
         los_matrix = getattr(phys, "los_matrix", {})
         num_los = sum(1 for v in los_matrix.values() if v) if los_matrix else 0
@@ -151,13 +151,13 @@ class FeatureExtractor:
         alloc = state.adaptive_alloc
         metrics = state.metrics
 
-        sum_rate_mbps = 0.0
-        spec_eff = 0.0
-        avg_ber = 0.0
-        max_ber = 0.0
-        jains = 0.0
-        fft_size = 0.0
-        bw_mhz = 0.0
+        sum_rate_mbps = float("nan")
+        spec_eff = float("nan")
+        avg_ber = float("nan")
+        max_ber = float("nan")
+        jains = float("nan")
+        fft_size = float("nan")
+        bw_mhz = float("nan")
         num_sub = 0
 
         if metrics:
@@ -165,8 +165,8 @@ class FeatureExtractor:
             jains = _safe(metrics.jains_fairness_index)
             if metrics.ber_per_device:
                 bers = [v for v in metrics.ber_per_device.values() if not math.isnan(v)]
-                avg_ber = _safe(float(np.mean(bers))) if bers else 0.0
-                max_ber = _safe(float(np.max(bers))) if bers else 0.0
+                avg_ber = _safe(float(np.mean(bers))) if bers else float("nan")
+                max_ber = _safe(float(np.max(bers))) if bers else float("nan")
 
         if alloc is not None:
             if hasattr(alloc, "sum_rate_bps"):
@@ -196,9 +196,9 @@ class FeatureExtractor:
     def _extract_localization(self, state: Any) -> Dict[str, Any]:
         loc = state.localization
 
-        est_x = est_y = est_z = 0.0
-        error = 0.0
-        confidence = 0.0
+        est_x = est_y = est_z = float("nan")
+        error = float("nan")
+        confidence = float("nan")
         status = "UNKNOWN"
 
         if loc is not None:
@@ -234,20 +234,20 @@ class FeatureExtractor:
         alloc = state.adaptive_alloc
         if alloc is None:
             return {
-                "alloc_sum_rate_mbps": 0.0,
+                "alloc_sum_rate_mbps": float("nan"),
                 "alloc_qos_status": "N/A",
                 "alloc_num_subcarriers_used": 0,
-                "alloc_avg_modulation_order": 0.0,
+                "alloc_avg_modulation_order": float("nan"),
             }
 
-        sum_rate = _safe(getattr(alloc, "sum_rate_bps", 0.0))
+        sum_rate = _safe(getattr(alloc, "sum_rate_bps", float("nan")))
         if not math.isnan(sum_rate):
             sum_rate = sum_rate / 1e6
 
         qos_status = str(getattr(alloc, "qos_status", "UNKNOWN"))
 
         num_sub = 0
-        avg_mod = 0.0
+        avg_mod = float("nan")
         if hasattr(alloc, "rho") and alloc.rho is not None:
             num_sub = int(np.sum(alloc.rho > 0))
         if hasattr(alloc, "modulation_map") and alloc.modulation_map:
@@ -275,11 +275,11 @@ class FeatureExtractor:
         pwr = state.power
         if pwr is None:
             return {
-                "power_total_budget_w":    0.0,
-                "power_loc_reserved_w":    0.0,
-                "power_comm_available_w":  0.0,
-                "power_nominal_rate_mbps": 0.0,
-                "power_feasible_rate_mbps": 0.0,
+                "power_total_budget_w":    float("nan"),
+                "power_loc_reserved_w":    float("nan"),
+                "power_comm_available_w":  float("nan"),
+                "power_nominal_rate_mbps": float("nan"),
+                "power_feasible_rate_mbps": float("nan"),
                 "power_preeq_mode":        "N/A",
                 "power_mode":              "N/A",
             }
@@ -308,9 +308,9 @@ class FeatureExtractor:
             return {
                 "opt_iterations":    0,
                 "opt_converged":     False,
-                "opt_sum_rate_mbps": 0.0,
-                "opt_loc_error_m":   0.0,
-                "opt_total_power_w": 0.0,
+                "opt_sum_rate_mbps": float("nan"),
+                "opt_loc_error_m":   float("nan"),
+                "opt_total_power_w": float("nan"),
                 "opt_feasible":      False,
             }
 
@@ -321,9 +321,9 @@ class FeatureExtractor:
         return {
             "opt_iterations":    _safe(getattr(opt, "iteration_count", 0), 0),
             "opt_converged":     bool(getattr(opt, "converged", False)),
-            "opt_sum_rate_mbps": _safe(getattr(opt, "sum_rate_bps", 0.0)) / 1e6,
-            "opt_loc_error_m":   _safe(getattr(opt, "localization_error_m", 0.0)),
-            "opt_total_power_w": _safe(getattr(opt, "total_power_w", 0.0)),
+            "opt_sum_rate_mbps": _safe(getattr(opt, "sum_rate_bps", float("nan"))) / 1e6,
+            "opt_loc_error_m":   _safe(getattr(opt, "localization_error_m", float("nan"))),
+            "opt_total_power_w": _safe(getattr(opt, "total_power_w", float("nan"))),
             "opt_feasible":      feasible,
         }
 
@@ -336,6 +336,6 @@ class FeatureExtractor:
     # ── Helpers ────────────────────────────────────────────────────────────────
 
     @staticmethod
-    def _default_dict(keys: List[str]) -> Dict[str, Any]:
+    def _nan_dict(keys: List[str]) -> Dict[str, Any]:
         """Returns a dict with all keys mapped to NaN."""
-        return {k: 0.0 for k in keys}
+        return {k: float("nan") for k in keys}

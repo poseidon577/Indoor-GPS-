@@ -1,0 +1,123 @@
+# VLCL_AI Dataset Generation Configuration
+# ==========================================
+# All generation parameters in one place. No hard-coded values in the framework.
+
+# ── Core ──────────────────────────────────────────────────────────────────────
+dataset_size: 10000          # Total valid samples to generate
+random_seed: 42              # Global seed for reproducibility
+parallel_workers: 1          # Number of parallel worker processes (1 = serial)
+checkpoint_interval: 500     # Save checkpoint every N valid samples
+validation_enabled: true     # Reject physically invalid samples
+
+# ── Scenario types ────────────────────────────────────────────────────────────
+scenario_types:
+  - open_office
+  - corridor
+  - meeting_room
+  - lab
+  - lobby
+
+# ── Room Geometry Randomisation ───────────────────────────────────────────────
+room:
+  width_min: 3.0             # m
+  width_max: 10.0            # m
+  length_min: 3.0            # m
+  length_max: 10.0           # m
+  height_min: 2.5            # m
+  height_max: 4.5            # m
+  wall_reflectivity_min: 0.4
+  wall_reflectivity_max: 0.95
+  floor_reflectivity_min: 0.05
+  floor_reflectivity_max: 0.40
+  ceiling_reflectivity_min: 0.30
+  ceiling_reflectivity_max: 0.90
+
+# ── LED Configuration Randomisation ──────────────────────────────────────────
+led:
+  count_min: 1               # Minimum number of LEDs
+  count_max: 8               # Maximum number of LEDs
+  power_min_w: 5.0           # W (log-uniform)
+  power_max_w: 50.0          # W
+  beam_angle_min_deg: 30.0
+  beam_angle_max_deg: 75.0
+  lambertian_order_min: 0.5
+  lambertian_order_max: 3.0
+  fov_min_deg: 40.0
+  fov_max_deg: 80.0
+  position_mode: grid        # "grid" (with jitter) or "random"
+
+# ── Receiver / User Randomisation ────────────────────────────────────────────
+receiver:
+  height_min_m: 0.70         # Table/desk height
+  height_max_m: 1.20         # Standing device height
+  fov_min_deg: 50.0
+  fov_max_deg: 90.0
+  apd_size_min: 5.0e-5       # m^2 (log-uniform)
+  apd_size_max: 5.0e-4       # m^2
+  noise_min: 1.0e-15         # W^2 (log-uniform)
+  noise_max: 1.0e-13         # W^2
+  gain_min: 0.8
+  gain_max: 1.2
+  mobility_types:
+    - static
+    - random_walk
+    - circular
+    - linear
+    - waypoint
+  speed_min_ms: 0.1          # m/s
+  speed_max_ms: 1.5          # m/s
+
+# ── Communication Parameters ──────────────────────────────────────────────────
+comm:
+  fft_sizes: [64, 128, 256, 512]
+  cp_ratios: [0.125, 0.25]
+  total_bandwidth_mhz_min: 10.0
+  total_bandwidth_mhz_max: 40.0
+  ber_target_min: 1.0e-4
+  ber_target_max: 1.0e-2
+  min_rate_mbps_min: 1.0
+  min_rate_mbps_max: 20.0
+
+# ── Noise Randomisation ───────────────────────────────────────────────────────
+noise:
+  thermal_noise_min: 1.0e-15
+  thermal_noise_max: 1.0e-13
+  ambient_light_factor_min: 0.5
+  ambient_light_factor_max: 2.0
+
+# ── Obstacle Randomisation ────────────────────────────────────────────────────
+obstacles:
+  count_min: 0
+  count_max: 5
+  types: [box, cylinder, sphere]
+  reflectivity_min: 0.1
+  reflectivity_max: 0.7
+
+# ── Dataset Split ─────────────────────────────────────────────────────────────
+split:
+  train: 0.70                # Must sum to 1.0
+  validation: 0.15
+  test: 0.15
+
+# ── Export Format ─────────────────────────────────────────────────────────────
+export:
+  format: parquet            # "parquet" | "csv" | "hdf5" | "npz"
+  output_dir: datasets       # Root output directory (relative to VLCL_AI/)
+  shard_size: 1000           # Samples per output file shard
+  compress: true             # Snappy compression (Parquet)
+
+# ── Pipeline Mode Distribution ────────────────────────────────────────────────
+# Controls which simulator pipeline is run for each sample.
+# baseline   = M1→M2→M5→Metrics (fastest)
+# adaptive   = M1→M2→M6→M7→M5→Metrics
+# optimize   = M1→M2→M8(joint)→Metrics (slowest, richest labels)
+# Fractions must sum to 1.0.
+pipeline:
+  baseline_fraction: 0.30
+  adaptive_fraction: 0.40
+  optimize_fraction: 0.30
+  power_mode: WATER_FILLING
+  pre_eq_mode: REGULARIZED
+  total_power_budget_w: 40.0
+  per_led_max_power_w: 10.0
+  max_optimizer_iterations: 6

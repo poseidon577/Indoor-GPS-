@@ -263,6 +263,7 @@ class IntegratedVLCLEngine:
             env_state=env_state,
             physics_state=physics_state,
             allocation_decision=alloc_decision,
+            power_decision=power_decision,
             adaptive_mode=(alloc_decision is None and state.physics is not None)
         )
         state.integrated = result
@@ -275,6 +276,7 @@ class IntegratedVLCLEngine:
         bits_dict: Optional[Dict[int, np.ndarray]] = None,
         modulation_order_dict: Optional[Dict[int, int]] = None,
         allocation_decision: Optional[AllocationDecision] = None,
+        power_decision: Optional[PowerDecision] = None,
         localization_reserve_w: float = 0.1,
         adaptive_mode: bool = False
     ) -> IntegratedVLCLState:
@@ -316,8 +318,7 @@ class IntegratedVLCLEngine:
                 grid=self.grid
             )
 
-        power_decision = None
-        if allocation_decision is not None:
+        if power_decision is None and allocation_decision is not None:
             power_decision = self.power_engine.process_power_and_preeq(
                 allocation_decision=allocation_decision,
                 physics_state=physics_state,
@@ -325,6 +326,8 @@ class IntegratedVLCLEngine:
                 frequency_plan=self.plan,
                 localization_reserve_w=localization_reserve_w
             )
+            
+        if power_decision is not None:
             # §10 FIX: use set_power_matrix() accessor (validates shape) instead of direct attribute mutation
             self.power_mapper.set_power_matrix(power_decision.power_allocation.per_subcarrier_power_matrix)
 

@@ -227,7 +227,8 @@ class DatasetGenerator:
         )
 
         physics_engine = PhysicsEngine()
-        integrated_engine = IntegratedVLCLEngine()
+        num_leds = len(vlcl_config.leds) if vlcl_config.leds else 4
+        integrated_engine = IntegratedVLCLEngine(num_leds=num_leds, grid=grid)
         adaptive_engine = AdaptiveTransmissionEngine(config=adaptive_config)
         power_engine = PowerPreEqualizationEngine(config=adaptive_config)
         optimizer = JointAdaptiveOptimizer(

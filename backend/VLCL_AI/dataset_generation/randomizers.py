@@ -29,6 +29,7 @@ from VLCL_AI.environment.config import (
     VLCLConfig, RoomConfig, LEDConfig, ReceiverConfig,
     MobilityConfig, ObstacleConfig
 )
+from VLCL_AI.physics.lambertian import lambertian_order
 
 
 class SceneRandomizer:
@@ -156,13 +157,13 @@ class SceneRandomizer:
         )
         led_cfgs = [
             LEDConfig(
-                id=led.led_id,
+                id=led.id,
                 position=led.position.tolist(),
                 orientation=led.orientation.tolist(),
                 power=led.power,
                 bias_current=led.bias_current,
                 frequency=led.frequency,
-                lambertian_order=led.lambertian_order,
+                lambertian_order=lambertian_order(led.beam_angle),
                 beam_angle=led.beam_angle,
                 fov=led.fov,
                 communication_enabled=led.communication_enabled,

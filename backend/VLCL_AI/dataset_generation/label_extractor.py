@@ -67,16 +67,16 @@ class LabelExtractor:
         pwr = state.power
         if pwr is None:
             return {
-                "label_power_vector_w": float("nan"),
-                "label_loc_power_per_led_w": float("nan"),
+                "label_power_vector_w": 0.0,
+                "label_loc_power_per_led_w": 0.0,
             }
 
         pa = pwr.power_allocation
         per_dev = pa.per_device_power_w if pa.per_device_power_w else {}
         loc_rsv = pa.localization_reserved_power_w if pa.localization_reserved_power_w else {}
 
-        avg_power = float(np.mean(list(per_dev.values()))) if per_dev else float("nan")
-        avg_loc_power = float(np.mean(list(loc_rsv.values()))) if loc_rsv else float("nan")
+        avg_power = float(np.mean(list(per_dev.values()))) if per_dev else 0.0
+        avg_loc_power = float(np.mean(list(loc_rsv.values()))) if loc_rsv else 0.0
 
         return {
             "label_power_vector_w":      avg_power,
@@ -96,7 +96,7 @@ class LabelExtractor:
         The estimate is from the localization engine (what ML models predict).
         """
         env = state.environment
-        gt_x = gt_y = gt_z = float("nan")
+        gt_x = gt_y = gt_z = 0.0
 
         if env is not None and env.receiver_position is not None:
             rx = env.receiver_position
@@ -125,14 +125,14 @@ class LabelExtractor:
         alloc = state.adaptive_alloc
         if alloc is None:
             return {
-                "label_avg_modulation_order": float("nan"),
+                "label_avg_modulation_order": 0.0,
                 "label_sum_modulation_bits":  0,
             }
 
         mod_map = getattr(alloc, "modulation_map", {})
         if not mod_map:
             return {
-                "label_avg_modulation_order": float("nan"),
+                "label_avg_modulation_order": 0.0,
                 "label_sum_modulation_bits":  0,
             }
 
@@ -146,7 +146,7 @@ class LabelExtractor:
 
         if not flat_orders:
             return {
-                "label_avg_modulation_order": float("nan"),
+                "label_avg_modulation_order": 0.0,
                 "label_sum_modulation_bits":  0,
             }
 
@@ -174,17 +174,17 @@ class LabelExtractor:
         alloc = state.adaptive_alloc
         if alloc is None:
             return {
-                "label_rho_active_fraction": float("nan"),
+                "label_rho_active_fraction": 0.0,
                 "label_qos_feasible":        False,
             }
 
         rho = getattr(alloc, "rho", None)
-        rho_fraction = float("nan")
+        rho_fraction = 0.0
         if rho is not None:
             rho_arr = np.asarray(rho)
             total = rho_arr.size
             active = int(np.sum(rho_arr > 0))
-            rho_fraction = float(active / total) if total > 0 else float("nan")
+            rho_fraction = float(active / total) if total > 0 else 0.0
 
         qos_ok = str(getattr(alloc, "qos_status", "UNKNOWN")) == "FEASIBLE"
 
@@ -206,12 +206,12 @@ class LabelExtractor:
         opt = state.optimization
         if opt is None:
             return {
-                "label_joint_sum_rate_mbps": float("nan"),
+                "label_joint_sum_rate_mbps": 0.0,
                 "label_joint_converged":     False,
                 "label_joint_feasible":      False,
             }
 
-        sum_rate = float(getattr(opt, "sum_rate_bps", float("nan")))
+        sum_rate = float(getattr(opt, "sum_rate_bps", 0.0))
         if not math.isnan(sum_rate):
             sum_rate = sum_rate / 1e6
 

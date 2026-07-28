@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { createServer as createViteServer } from "vite";
 
 type TelemetryValue = string | number | boolean | null;
@@ -1119,6 +1119,67 @@ except Exception as e:
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
+  });
+
+  // API Route: Get dataset configuration
+  app.get("/api/dataset/config", (req, res) => {
+    const configPath = path.join(BASE_DIR, "VLCL_AI", "configs", "dataset_config.yaml");
+    if (fs.existsSync(configPath)) {
+      res.send(fs.readFileSync(configPath, "utf-8"));
+    } else {
+      res.status(404).json({ error: "Dataset config not found." });
+    }
+  });
+
+  // API Route: Save dataset configuration
+  app.post("/api/dataset/config", (req, res) => {
+    const { content } = req.body;
+    const configPath = path.join(BASE_DIR, "VLCL_AI", "configs", "dataset_config.yaml");
+    try {
+      fs.mkdirSync(path.dirname(configPath), { recursive: true });
+      fs.writeFileSync(configPath, content, "utf-8");
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // API Route: Run dataset generation as SSE stream
+  app.get("/api/dataset/generate-stream", (req, res) => {
+    const scriptPath = path.join(BASE_DIR, "VLCL_AI", "examples", "run_dataset.py");
+    const isWin = process.platform === "win32";
+    const venvPythonPath = isWin
+      ? path.join(BASE_DIR, "VLCL_AI", ".venv", "Scripts", "python.exe")
+      : path.join(BASE_DIR, "VLCL_AI", ".venv", "bin", "python3");
+    const pythonCmd = fs.existsSync(venvPythonPath) ? venvPythonPath : (isWin ? "python" : "python3");
+
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive"
+    });
+
+    const child = spawn(pythonCmd, [scriptPath], {
+      cwd: BASE_DIR,
+      env: { ...process.env, PYTHONIOENCODING: "utf-8", PYTHONPATH: BASE_DIR }
+    });
+
+    child.stdout.on("data", (data) => {
+      res.write(`data: ${JSON.stringify({ type: "stdout", text: data.toString() })}\n\n`);
+    });
+
+    child.stderr.on("data", (data) => {
+      res.write(`data: ${JSON.stringify({ type: "stderr", text: data.toString() })}\n\n`);
+    });
+
+    child.on("close", (code) => {
+      res.write(`data: ${JSON.stringify({ type: "close", code })}\n\n`);
+      res.end();
+    });
+    
+    req.on("close", () => {
+      child.kill();
+    });
   });
 
   // Vite middleware for development

@@ -1,0 +1,129 @@
+{
+  "created_at": "2026-07-28T04:22:51.281275+00:00",
+  "simulator_versions": {
+    "generator": "1.0.0",
+    "physics_engine": "2.1",
+    "optimizer": "1.3",
+    "communication_engine": "1.2",
+    "localization_engine": "1.1"
+  },
+  "config_snapshot": {
+    "dataset_size": 10000,
+    "random_seed": 42,
+    "parallel_workers": 1,
+    "checkpoint_interval": 500,
+    "validation_enabled": true,
+    "room": {
+      "width_min": 3.0,
+      "width_max": 10.0,
+      "length_min": 3.0,
+      "length_max": 10.0,
+      "height_min": 2.5,
+      "height_max": 4.5,
+      "wall_reflectivity_min": 0.4,
+      "wall_reflectivity_max": 0.95,
+      "floor_reflectivity_min": 0.05,
+      "floor_reflectivity_max": 0.4,
+      "ceiling_reflectivity_min": 0.3,
+      "ceiling_reflectivity_max": 0.9
+    },
+    "led": {
+      "count_min": 1,
+      "count_max": 8,
+      "power_min_w": 5.0,
+      "power_max_w": 50.0,
+      "beam_angle_min_deg": 30.0,
+      "beam_angle_max_deg": 75.0,
+      "lambertian_order_min": 0.5,
+      "lambertian_order_max": 3.0,
+      "fov_min_deg": 40.0,
+      "fov_max_deg": 80.0,
+      "position_mode": "grid"
+    },
+    "receiver": {
+      "height_min_m": 0.7,
+      "height_max_m": 1.2,
+      "fov_min_deg": 50.0,
+      "fov_max_deg": 90.0,
+      "apd_size_min": 5e-05,
+      "apd_size_max": 0.0005,
+      "noise_min": 1e-15,
+      "noise_max": 1e-13,
+      "gain_min": 0.8,
+      "gain_max": 1.2,
+      "mobility_types": [
+        "static",
+        "random_walk",
+        "circular",
+        "linear",
+        "waypoint"
+      ],
+      "speed_min_ms": 0.1,
+      "speed_max_ms": 1.5
+    },
+    "comm": {
+      "fft_sizes": [
+        64,
+        128,
+        256,
+        512
+      ],
+      "cp_ratios": [
+        0.125,
+        0.25
+      ],
+      "total_bandwidth_mhz_min": 10.0,
+      "total_bandwidth_mhz_max": 40.0,
+      "ber_target_min": 0.0001,
+      "ber_target_max": 0.01,
+      "min_rate_mbps_min": 1.0,
+      "min_rate_mbps_max": 20.0
+    },
+    "noise": {
+      "thermal_noise_min": 1e-15,
+      "thermal_noise_max": 1e-13,
+      "ambient_light_factor_min": 0.5,
+      "ambient_light_factor_max": 2.0
+    },
+    "obstacles": {
+      "count_min": 0,
+      "count_max": 5,
+      "types": [
+        "box",
+        "cylinder",
+        "sphere"
+      ],
+      "reflectivity_min": 0.1,
+      "reflectivity_max": 0.7
+    },
+    "split": {
+      "train": 0.7,
+      "validation": 0.15,
+      "test": 0.15
+    },
+    "export": {
+      "format": "parquet",
+      "output_dir": "datasets",
+      "shard_size": 1000,
+      "compress": true
+    },
+    "pipeline": {
+      "baseline_fraction": 0.3,
+      "adaptive_fraction": 0.4,
+      "optimize_fraction": 0.3,
+      "power_mode": "WATER_FILLING",
+      "pre_eq_mode": "REGULARIZED",
+      "total_power_budget_w": 40.0,
+      "per_led_max_power_w": 10.0,
+      "max_optimizer_iterations": 6
+    },
+    "scenario_types": [
+      "open_office",
+      "corridor",
+      "meeting_room",
+      "lab",
+      "lobby"
+    ],
+    "generator_version": "1.0.0"
+  }
+}

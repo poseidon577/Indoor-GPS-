@@ -103,3 +103,7 @@ coverage.xml
 *.log
 .hypothesis/
 .pytest_cache/
+
+# Datasets
+datasets/
+backend/datasets/

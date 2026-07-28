@@ -152,9 +152,12 @@ class PowerPreEqualizationEngine:
         actual_num_leds = self.num_leds
         
         # 1. Setup per-LED power ceilings and localization reserves
-        led_ceilings = per_led_max_power_w or {
-            led_id: total_power_budget_w / self.num_leds for led_id in range(1, self.num_leds + 1)
-        }
+        led_ceilings = {}
+        for led_id in range(1, self.num_leds + 1):
+            if per_led_max_power_w and led_id in per_led_max_power_w:
+                led_ceilings[led_id] = per_led_max_power_w[led_id]
+            else:
+                led_ceilings[led_id] = total_power_budget_w / self.num_leds
         
         loc_reserves = {led_id: min(localization_reserve_w, led_ceilings[led_id]) for led_id in range(1, self.num_leds + 1)}
         comm_budgets = {led_id: max(0.0, led_ceilings[led_id] - loc_reserves[led_id]) for led_id in range(1, self.num_leds + 1)}

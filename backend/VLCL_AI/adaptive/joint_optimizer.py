@@ -281,7 +281,7 @@ class JointAdaptiveOptimizer:
             # STEP 07: Convergence & Feasibility Evaluation
             per_led_pwr = {
                 led_id: float(np.sum(comm_power_matrix[led_id - 1, :]) + np.sum(loc_power_matrix[led_id - 1, :]))
-                for led_id in range(1, 5)
+                for led_id in range(1, comm_power_matrix.shape[0] + 1)
             }
 
             constraint_status = self.constraint_evaluator.evaluate(

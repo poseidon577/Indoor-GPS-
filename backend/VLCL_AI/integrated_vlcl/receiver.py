@@ -8,6 +8,7 @@ from VLCL_AI.communication.qam import QAMModem
 from VLCL_AI.communication.led_frequency_response import LEDFrequencyResponse
 from VLCL_AI.localization.phase_estimator import PhaseEstimator, PhaseUnwrapper
 from VLCL_AI.localization.position_solver import PositionSolver, DistanceDifferenceSolver
+from VLCL_AI.localization.exceptions import SolverError
 from VLCL_AI.physics.physics_engine import PhysicsState
 from VLCL_AI.integrated_vlcl.spectrum_partitioner import SpectrumPartitioner
 from VLCL_AI.integrated_vlcl.power_mapper import MultiLedPowerMapper
@@ -60,7 +61,7 @@ class IntegratedVLCLReceiver:
         if not led_ids:
             return np.array([]), np.array([])
             
-        n_samples = len(unipolar_signals_dict[led_ids[0]])
+        n_samples = max(len(s) for s in unipolar_signals_dict.values())
         sample_rate = self.partitioner.grid.sample_rate
         t = np.arange(n_samples) / sample_rate
         
@@ -317,35 +318,40 @@ class IntegratedVLCLReceiver:
         # 2. Phase unwrapping
         unwrapped_phases = self.phase_unwrapper.unwrap(raw_phases, prev_phases)
         
-        # 3. Solve distance differences
-        dd_solver = DistanceDifferenceSolver(
-            frequency_plan=self.partitioner.plan,
-            tone_to_led_map=self.power_mapper.tone_to_led_map
-        )
-        distance_diffs = dd_solver.solve(unwrapped_phases)
-        
-        # 4. Coordinate solving via non-linear PositionSolver
-        if self.position_solver is not None:
-            pos_solver = self.position_solver
-        else:
-            # Extract active ceiling LED positions fallback
-            led_positions = {led_id: np.array(pos) for led_id, pos in enumerate([
-                [-0.4, 0.4, 1.35], [0.4, 0.4, 1.35], [-0.4, -0.4, 1.35], [0.4, -0.4, 1.35]
-            ], 1)}
-            pos_solver = PositionSolver(
-                led_positions=led_positions,
-                room_bounds=room_bounds,
-                dimensions="3D",
-                fixed_height_m=0.85,
-                solver_method="trust_region"
+        try:
+            # 3. Solve distance differences
+            dd_solver = DistanceDifferenceSolver(
+                frequency_plan=self.partitioner.plan,
+                tone_to_led_map=self.power_mapper.tone_to_led_map
             )
-        
-        p_guess = None
-        p_est, solver_meta = pos_solver.solve(
-            distance_differences=distance_diffs,
-            initial_guess=p_guess,
-            strategy="previous_or_room_center"
-        )
+            distance_diffs = dd_solver.solve(unwrapped_phases)
+            
+            # 4. Coordinate solving via non-linear PositionSolver
+            if self.position_solver is not None:
+                pos_solver = self.position_solver
+            else:
+                # Extract active ceiling LED positions fallback
+                led_positions = {led_id: np.array(pos) for led_id, pos in enumerate([
+                    [-0.4, 0.4, 1.35], [0.4, 0.4, 1.35], [-0.4, -0.4, 1.35], [0.4, -0.4, 1.35]
+                ], 1)}
+                pos_solver = PositionSolver(
+                    led_positions=led_positions,
+                    room_bounds=room_bounds,
+                    dimensions="3D",
+                    fixed_height_m=0.85,
+                    solver_method="trust_region"
+                )
+            
+            p_guess = None
+            p_est, solver_meta = pos_solver.solve(
+                distance_differences=distance_diffs,
+                initial_guess=p_guess,
+                strategy="previous_or_room_center"
+            )
+        except SolverError:
+            p_est = np.array([0.0, 0.0, 0.85])
+            distance_diffs = np.array([])
+            solver_meta = {"success": False, "status": -1, "message": "SolverError"}
         
         # Evaluate errors if true coordinate is provided
         err_3d = 0.0

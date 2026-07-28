@@ -108,7 +108,7 @@ class CheckpointManager:
     def save(
         self,
         state: CheckpointState,
-        rng: np.random.RandomState,
+        rng: Optional[np.random.RandomState] = None,
         keep_periodic: bool = True
     ) -> None:
         """
@@ -120,10 +120,12 @@ class CheckpointManager:
             keep_periodic: If True, also saves a periodic snapshot every
                            ``interval`` samples for longer-term recovery.
         """
-        # Save RNG state (allow_pickle required: RNG state is a tuple of mixed types)
-        rng_path = os.path.join(self.checkpoint_dir, self.RNG_FILE)
-        np.save(rng_path, np.array(rng.get_state(), dtype=object), allow_pickle=True)
-        state.rng_state_path = rng_path
+        if rng is not None:
+            rng_path = os.path.join(self.checkpoint_dir, self.RNG_FILE)
+            np.save(rng_path, np.array(rng.get_state(), dtype=object), allow_pickle=True)
+            state.rng_state_path = rng_path
+        else:
+            state.rng_state_path = None
 
         # Save latest checkpoint
         latest_path = os.path.join(self.checkpoint_dir, self.LATEST_FILE)

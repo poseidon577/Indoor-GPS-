@@ -85,6 +85,13 @@ class EnvironmentState:
     num_leds: int = field(default=0)
     led_ids: List[int] = field(default_factory=list)
 
+    # Surface reflectivities — sourced from Room object (propagated via VLCLSimulator).
+    # Placed after obstacles to satisfy dataclass ordering rule (defaults must follow non-defaults).
+    # Default NaN preserves backward compatibility with legacy call-sites that omit these fields.
+    wall_reflectivity: float = float("nan")
+    floor_reflectivity: float = float("nan")
+    ceiling_reflectivity: float = float("nan")
+
     # X-2 SSOT FIX: Receiver hardware parameters (apd_size, fov, noise, gain) from ReceiverConfig.
     # PhysicsEngine.compute() reads these instead of its own internal defaults.
     receiver_hardware: ReceiverHardware = field(default_factory=ReceiverHardware)

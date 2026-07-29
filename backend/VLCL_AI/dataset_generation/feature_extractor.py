@@ -89,7 +89,8 @@ class FeatureExtractor:
         if hasattr(env, "obstacles") and env.obstacles:
             num_obs = len(env.obstacles)
 
-        rx_hw = getattr(env, "receiver_hw", None)
+        # X-FIX-2: correct attribute name — EnvironmentState uses `receiver_hardware`, not `receiver_hw`
+        rx_hw = getattr(env, "receiver_hardware", None)
         fov = rx_hw.fov_deg if rx_hw is not None else float("nan")
 
         return {
@@ -150,6 +151,7 @@ class FeatureExtractor:
         comm = state.communication
         alloc = state.adaptive_alloc
         metrics = state.metrics
+        integrated = state.integrated
 
         sum_rate_mbps = float("nan")
         spec_eff = float("nan")
@@ -179,6 +181,33 @@ class FeatureExtractor:
                 sum_rate_mbps = _safe(comm.sum_rate / 1e6)
             if hasattr(comm, "spectral_efficiency"):
                 spec_eff = _safe(comm.spectral_efficiency)
+
+        # X-FIX-3/4: Fallback to state.integrated when Module 3 did not run.
+        # The dataset pipeline uses IntegratedVLCLEngine (Module 5) which populates
+        # state.integrated but leaves state.communication as None.
+        if integrated is not None:
+            # --- bandwidth (Fix 3b) ---
+            meta = integrated.metadata or {}
+            bw_hz = meta.get("bandwidth_hz", float("nan"))
+            if not (isinstance(bw_hz, float) and math.isnan(bw_hz)):
+                bw_mhz = _safe(bw_hz / 1e6)
+
+            # --- BER per LED (Fix 4): per-LED BER is stored in comm_results ---
+            comm_res = integrated.communication_results
+            if comm_res:
+                bers = [r.get("empirical_ber", float("nan")) for r in comm_res.values()]
+                bers = [b for b in bers if not (isinstance(b, float) and math.isnan(b))]
+                if bers:
+                    avg_ber = _safe(float(np.mean(bers)))
+                    max_ber = _safe(float(np.max(bers)))
+
+            # --- spectral efficiency (Fix 4b): SE = sum_rate / bandwidth ---
+            # sum_rate_mbps is already populated from state.metrics above.
+            if (math.isnan(spec_eff)
+                    and not math.isnan(sum_rate_mbps)
+                    and not math.isnan(bw_mhz)
+                    and bw_mhz > 0):
+                spec_eff = _safe(sum_rate_mbps / bw_mhz)  # bits/s/Hz (Mbps / MHz = dimensionless)
 
         return {
             "comm_sum_rate_mbps":           sum_rate_mbps,
@@ -213,6 +242,21 @@ class FeatureExtractor:
                 confidence = _safe(loc.confidence)
             if hasattr(loc, "status"):
                 status = str(loc.status)
+
+        # X-FIX-5: Fallback to state.integrated when Module 4 did not run.
+        # The dataset pipeline uses IntegratedVLCLEngine (Module 5) which stores the
+        # localization solver output in state.integrated.localization_results, leaving
+        # state.localization as None.
+        if loc is None and state.integrated is not None:
+            loc_res = state.integrated.localization_results or {}
+            ep = loc_res.get("estimated_position")
+            if ep is not None and len(ep) >= 3:
+                est_x = _safe(float(ep[0]))
+                est_y = _safe(float(ep[1]))
+                est_z = _safe(float(ep[2]))
+            raw_err = loc_res.get("error_3d_m", float("nan"))
+            error = _safe(raw_err) if raw_err is not None else float("nan")
+            status = "VALID" if loc_res.get("success", False) else "SOLVER_FAILED"
 
         if state.metrics:
             error = _safe(state.metrics.localization_error_m, error)

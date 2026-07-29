@@ -180,6 +180,11 @@ class VLCLSimulator:
             # INT-001: room dimensions from Scene.room
             room_dims=[self.scene.room.width, self.scene.room.length, self.scene.room.height],
 
+            # Surface reflectivities sourced from Room object (SSOT — never hardcode downstream)
+            wall_reflectivity=self.scene.room.wall_reflectivity,
+            floor_reflectivity=self.scene.room.floor_reflectivity,
+            ceiling_reflectivity=self.scene.room.ceiling_reflectivity,
+
             obstacles=[obs.to_dict() for obs in self.scene.obstacles.values()],
 
             # X-1 SSOT: LED topology derived here — never hardcoded in downstream modules

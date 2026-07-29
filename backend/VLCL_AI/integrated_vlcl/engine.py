@@ -411,6 +411,7 @@ class IntegratedVLCLEngine:
             metadata={
                 "num_samples": len(rx_waveform),
                 "sample_rate_hz": self.grid.sample_rate,
+                "bandwidth_hz": self.grid.total_bandwidth,
                 "power_decision": power_decision,
                 "best_channel_gain": float(best_gain),
                 "modulation_orders": orders

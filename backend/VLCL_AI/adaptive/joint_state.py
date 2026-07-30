@@ -1,13 +1,7 @@
 # joint_state.py
 import numpy as np
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Dict, List, Any, Optional
-
-# TYPE_CHECKING-only import avoids circular imports at runtime;
-# AllocationDecision / PowerDecision are only needed for type annotations.
-if TYPE_CHECKING:
-    from VLCL_AI.adaptive.decision import AllocationDecision
-    from VLCL_AI.adaptive.power_decision import PowerDecision
+from typing import Dict, List, Any, Optional
 
 @dataclass
 class ConstraintStatus:
@@ -64,12 +58,6 @@ class JointDecisionState:
     localization_error_m: float              # 3D positioning error [meters]
     constraint_status: ConstraintStatus      # Detailed constraint breakdown
     history: List[Dict[str, Any]] = field(default_factory=list) # Convergence history across iterations
-
-    # Fix 1: carry best-iteration M6/M7 decisions so optimize_state() can
-    # back-write them to state.adaptive_alloc / state.power.
-    # Optional — None only when JointDecisionState is built outside the optimizer.
-    alloc_decision: Optional[Any] = field(default=None, repr=False)   # AllocationDecision
-    power_decision: Optional[Any] = field(default=None, repr=False)   # PowerDecision
 
     def get(self, key: str, default: Any = None) -> Any:
         return getattr(self, key, default)

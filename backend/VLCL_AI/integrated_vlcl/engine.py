@@ -377,52 +377,18 @@ class IntegratedVLCLEngine:
         }
         self.receiver.position_solver.fixed_height = float(env_state.receiver_position[2])
         self.receiver.position_solver.room_bounds = room_bounds
-
-        # Fix 2: Trilateration requires at least 3 observable LEDs (2 independent
-        # distance-difference equations needed for a 2D fix, 3 for full 3D).
-        # When the scene has fewer, skip the solver entirely and return a
-        # well-formed failure result so loc_est_x/y/z stay NaN rather than
-        # silently returning the [0, 0, 0.85] SolverError fallback.
-        num_active_leds = sum(
-            1 for v in env_state.los_matrix.values() if v
-        ) if env_state.los_matrix else env_state.num_leds
-        # Fall back to total LED count if los_matrix is empty (all blocked)
-        if num_active_leds == 0:
-            num_active_leds = env_state.num_leds
-
-        if num_active_leds < 3:
-            logger.debug(
-                f"Skipping localization solver: only {num_active_leds} active LED(s) "
-                f"(need \u22653 for trilateration)."
-            )
-            loc_results = {
-                "estimated_position": None,
-                "success": False,
-                "error_3d_m": float("nan"),
-                "solver_meta": {
-                    "success": False,
-                    "message": f"Insufficient LEDs: {num_active_leds} active, need >=3",
-                },
-                "raw_phases": [],
-                "unwrapped_phases": [],
-                "distance_differences": np.array([]),
-                "loc_phasors": [],
-            }
-        else:
-            loc_results = self.receiver.process_localization_branch(
-                rx_waveform=rx_waveform,
-                t=t,
-                physics_state=physics_state,
-                room_bounds=room_bounds,
-                true_position_only_for_eval=p_true,
-                prev_phases=self.prev_phases
-            )
         
-        # Track estimated phases for unwrapping tracking.
-        # Normalize empty list (produced when solver is skipped) to None so the
-        # PhaseUnwrapper treats the next frame as having no prior phase history.
-        _up = loc_results.get("unwrapped_phases")
-        self.prev_phases = _up if (_up is not None and len(_up) > 0) else None
+        loc_results = self.receiver.process_localization_branch(
+            rx_waveform=rx_waveform,
+            t=t,
+            physics_state=physics_state,
+            room_bounds=room_bounds,
+            true_position_only_for_eval=p_true,
+            prev_phases=self.prev_phases
+        )
+        
+        # Track estimated phases for unwrapping tracking
+        self.prev_phases = loc_results.get("unwrapped_phases")
         
         # Compile transmitter performance maps
         papr_per_led = {led_id: metrics["papr_db"] for led_id, metrics in clipping_metrics.items()}
@@ -445,10 +411,6 @@ class IntegratedVLCLEngine:
             metadata={
                 "num_samples": len(rx_waveform),
                 "sample_rate_hz": self.grid.sample_rate,
-                # Fix 2: always populate bandwidth_hz from the grid so that
-                # feature_extractor._extract_communication() can reliably compute
-                # comm_bandwidth_mhz and comm_spectral_eff, even when the
-                # localization branch failed or was skipped.
                 "bandwidth_hz": self.grid.total_bandwidth,
                 "power_decision": power_decision,
                 "best_channel_gain": float(best_gain),

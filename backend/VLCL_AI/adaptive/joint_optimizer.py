@@ -114,16 +114,6 @@ class JointAdaptiveOptimizer:
             power_mode=power_mode,
             pre_eq_mode=pre_eq_mode
         )
-
-        # Fix 1: expose the best-iteration M6/M7 decisions on SystemState so
-        # feature/label extractors can read alloc_* and power_* fields even
-        # when the pipeline ran in "optimize" mode (where allocate_state() and
-        # process_state() are never called directly by the generator).
-        if state.optimization.alloc_decision is not None:
-            state.adaptive_alloc = state.optimization.alloc_decision
-        if state.optimization.power_decision is not None:
-            state.power = state.optimization.power_decision
-
         return state
 
     def optimize(
@@ -336,11 +326,7 @@ class JointAdaptiveOptimizer:
                 per_device_ber=per_device_ber,
                 localization_error_m=curr_loc_err,
                 constraint_status=constraint_status,
-                history=iteration_history,
-                # Fix 1: store the M6/M7 objects so optimize_state() can
-                # back-write them to state.adaptive_alloc / state.power.
-                alloc_decision=alloc_decision,
-                power_decision=power_decision,
+                history=iteration_history
             )
 
             if best_state is None or (constraint_status.overall_feasible and not best_state.constraint_status.overall_feasible) or (constraint_status.overall_feasible == best_state.constraint_status.overall_feasible and curr_sum_rate > best_state.sum_rate_bps):

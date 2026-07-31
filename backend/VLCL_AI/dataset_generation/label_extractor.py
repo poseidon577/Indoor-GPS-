@@ -87,13 +87,23 @@ class LabelExtractor:
 
     def extract_localization(self, state: Any) -> Dict[str, Any]:
         """
-        Label: ground-truth 3D position from Module 1 (environment).
+        Label: ground-truth 3D position from Module 1 (environment) and estimated
+        position from the localization engine, plus the full discrepancy vector
+        and angular error — used to train a position correction model.
 
-        Source: state.environment.receiver_position  ← ground truth
-                state.localization.estimated_position ← prediction
+        Source (ground truth): state.environment.receiver_position
+        Source (estimate)    : state.localization.estimated_position (Module 4)
+                               OR state.integrated.localization_results (Module 5 fallback)
 
-        The ground truth is always from state.environment (SSOT).
-        The estimate is from the localization engine (what ML models predict).
+        Columns returned
+        ----------------
+        label_gt_x / _y / _z        : ground-truth position (m)
+        label_est_x / _y / _z       : predicted position from LocalizationEngine (m)
+        label_disc_x / _y / _z      : Δ = est − gt per axis (m)
+        label_disc_3d_m             : ‖Δ‖₂  3-D Euclidean error (m)
+        label_disc_2d_m             : ‖ΔXY‖₂  horizontal-plane error (m)
+        label_disc_bearing_deg      : atan2(Δy, Δx) — direction of XY error (°, −180…180)
+        label_disc_elevation_deg    : atan2(Δz, ‖ΔXY‖) — vertical tilt of error (°, −90…90)
         """
         env = state.environment
         gt_x = gt_y = gt_z = float("nan")
@@ -104,10 +114,62 @@ class LabelExtractor:
             gt_y = float(rx[1])
             gt_z = float(rx[2])
 
+        # ── Estimated position: Module 4 primary, Module 5 integrated fallback ──
+        est_x = est_y = est_z = float("nan")
+
+        loc = state.localization
+        if loc is not None:
+            ep = getattr(loc, "estimated_position", None)
+            if ep is not None and len(ep) >= 3:
+                est_x, est_y, est_z = float(ep[0]), float(ep[1]), float(ep[2])
+
+        if math.isnan(est_x):
+            integrated = state.integrated
+            if integrated is not None:
+                loc_res = getattr(integrated, "localization_results", None)
+                if isinstance(loc_res, dict):
+                    ep = loc_res.get("estimated_position")
+                    if ep is not None and len(ep) >= 3:
+                        est_x, est_y, est_z = float(ep[0]), float(ep[1]), float(ep[2])
+
+        # ── Discrepancy vector (est − gt) ──────────────────────────────────────
+        disc_x = disc_y = disc_z = float("nan")
+        disc_3d = disc_2d = float("nan")
+        bearing_deg = elevation_deg = float("nan")
+
+        if not (math.isnan(est_x) or math.isnan(gt_x)):
+            disc_x = est_x - gt_x
+            disc_y = est_y - gt_y
+            disc_z = est_z - gt_z
+
+            disc_2d = math.sqrt(disc_x ** 2 + disc_y ** 2)
+            disc_3d = math.sqrt(disc_x ** 2 + disc_y ** 2 + disc_z ** 2)
+
+            # Bearing: direction of horizontal error (atan2 in degrees, range −180…180)
+            bearing_deg = math.degrees(math.atan2(disc_y, disc_x))
+
+            # Elevation: vertical tilt of the 3-D error vector (range −90…90)
+            elevation_deg = math.degrees(math.atan2(disc_z, disc_2d)) if disc_2d > 1e-12 else float("nan")
+
         return {
-            "label_gt_x": gt_x,
-            "label_gt_y": gt_y,
-            "label_gt_z": gt_z,
+            # Ground truth
+            "label_gt_x":               gt_x,
+            "label_gt_y":               gt_y,
+            "label_gt_z":               gt_z,
+            # Predicted (estimated) position
+            "label_est_x":              est_x,
+            "label_est_y":              est_y,
+            "label_est_z":              est_z,
+            # Per-axis discrepancy (signed, metres)
+            "label_disc_x":             disc_x,
+            "label_disc_y":             disc_y,
+            "label_disc_z":             disc_z,
+            # Magnitude of error
+            "label_disc_3d_m":          disc_3d,
+            "label_disc_2d_m":          disc_2d,
+            # Angular direction of the error vector (degrees)
+            "label_disc_bearing_deg":   bearing_deg,
+            "label_disc_elevation_deg": elevation_deg,
         }
 
     # ── Task: Adaptive Modulation ──────────────────────────────────────────────

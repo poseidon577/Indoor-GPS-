@@ -1145,6 +1145,8 @@ except Exception as e:
   });
 
   // API Route: Run dataset generation as SSE stream
+  // Query params:
+  //   ?mode=baseline | adaptive | optimize | mixed (default: mixed)
   app.get("/api/dataset/generate-stream", (req, res) => {
     const scriptPath = path.join(BASE_DIR, "VLCL_AI", "examples", "run_dataset.py");
     const isWin = process.platform === "win32";
@@ -1153,13 +1155,20 @@ except Exception as e:
       : path.join(BASE_DIR, "VLCL_AI", ".venv", "bin", "python3");
     const pythonCmd = fs.existsSync(venvPythonPath) ? venvPythonPath : (isWin ? "python" : "python3");
 
+    // Validate and pass the pipeline mode to Python
+    const VALID_MODES = ["baseline", "adaptive", "optimize", "mixed"];
+    const rawMode = String(req.query.mode ?? "mixed").toLowerCase();
+    const pipelineMode = VALID_MODES.includes(rawMode) ? rawMode : "mixed";
+
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       "Connection": "keep-alive"
     });
 
-    const child = spawn(pythonCmd, [scriptPath], {
+    res.write(`data: ${JSON.stringify({ type: "info", text: `[DataFactory] Starting generation — pipeline mode: ${pipelineMode.toUpperCase()}\n` })}\n\n`);
+
+    const child = spawn(pythonCmd, [scriptPath, "--mode", pipelineMode], {
       cwd: BASE_DIR,
       env: { ...process.env, PYTHONIOENCODING: "utf-8", PYTHONPATH: BASE_DIR }
     });

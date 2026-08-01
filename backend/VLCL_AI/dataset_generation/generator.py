@@ -258,6 +258,70 @@ class DatasetGenerator:
                 power_mode=pipeline_cfg.power_mode,
                 pre_eq_mode=pipeline_cfg.pre_eq_mode,
             )
+            # ── Bridge optimizer results into sub-states consumed by extractors ──
+            # optimize_state() only populates state.optimization (Module 8 SSOT).
+            # The feature/label extractors also read state.adaptive_alloc (M6),
+            # state.power (M7), state.integrated (M5), and state.localization (M4).
+            # We surface the data already computed inside the optimizer into those
+            # slots without re-running any engine.
+            opt = state.optimization  # JointDecisionState
+            if opt is not None:
+                # ── M6: AllocationDecision → state.adaptive_alloc ──────────────
+                from VLCL_AI.adaptive.decision import AllocationDecision
+                from VLCL_AI.adaptive.qos import QoSStatus
+                state.adaptive_alloc = AllocationDecision(
+                    rho=opt.rho,
+                    modulation_map=opt.modulation_map,
+                    achievable_rates_bps=opt.per_device_rates_bps,
+                    sum_rate_bps=opt.sum_rate_bps,
+                    active_subcarriers=opt.rho.sum(axis=0) > 0 if hasattr(opt.rho, 'sum') else None,
+                    qos_status=QoSStatus.FEASIBLE if (opt.constraint_status and opt.constraint_status.qos_satisfied) else QoSStatus.INFEASIBLE,
+                )
+
+                # ── M7: PowerDecision → state.power ────────────────────────────
+                from VLCL_AI.adaptive.power_decision import PowerDecision
+                from VLCL_AI.adaptive.power_allocation import PowerAllocation
+                from VLCL_AI.adaptive.pre_equalization_state import PreEqualizationState
+                import numpy as _np
+                combined_pwr = opt.comm_power_matrix + opt.loc_power_matrix
+                per_led_total = {led_id: float(_np.sum(combined_pwr[led_id - 1, :])) for led_id in range(1, combined_pwr.shape[0] + 1)}
+                loc_rsv = {led_id: float(_np.sum(opt.loc_power_matrix[led_id - 1, :])) for led_id in range(1, combined_pwr.shape[0] + 1)}
+                comm_av = {led_id: float(_np.sum(opt.comm_power_matrix[led_id - 1, :])) for led_id in range(1, combined_pwr.shape[0] + 1)}
+                pa = PowerAllocation(
+                    per_device_power_w=per_led_total,
+                    localization_reserved_power_w=loc_rsv,
+                    communication_available_power_w=comm_av,
+                    total_power_budget_w=pipeline_cfg.total_power_budget_w,
+                    per_subcarrier_power_matrix=combined_pwr,
+                    mode=pipeline_cfg.power_mode,
+                )
+                pe_state = PreEqualizationState(
+                    coefficients_matrix=opt.pre_eq_coefficients,
+                    mode=pipeline_cfg.pre_eq_mode,
+                )
+                state.power = PowerDecision(
+                    power_allocation=pa,
+                    pre_eq_state=pe_state,
+                    nominal_sum_rate_bps=opt.sum_rate_bps,
+                    feasible_sum_rate_bps=opt.sum_rate_bps,
+                )
+
+                # ── M5: Run integrated engine to get state.integrated ───────────
+                # This gives bandwidth_hz, comm_results (BER), and localization_results
+                # (estimated_position) which the feature extractor reads from.
+                try:
+                    state = integrated_engine.step_state(state)
+                except Exception:
+                    pass  # Non-fatal: opt features still populated via state.optimization
+
+            # ── M4: Run localization engine to populate state.localization ──────
+            # This is needed for the discrepancy labels (label_disc_*).
+            try:
+                from VLCL_AI.localization.engine import LocalizationEngine
+                loc_engine = LocalizationEngine()
+                state = loc_engine.step_state(state)
+            except Exception:
+                pass  # Non-fatal: discrepancy labels will remain NaN
 
         elif pipeline_mode == "adaptive":
             num_leds = state.num_leds or 4

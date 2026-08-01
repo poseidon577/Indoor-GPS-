@@ -269,13 +269,27 @@ class DatasetGenerator:
                 # ── M6: AllocationDecision → state.adaptive_alloc ──────────────
                 from VLCL_AI.adaptive.decision import AllocationDecision
                 from VLCL_AI.adaptive.qos import QoSStatus
+                import numpy as _np
+                
+                qos = opt.constraint_status
+                deficits = qos.rate_deficits_bps if qos and hasattr(qos, "rate_deficits_bps") else {}
+                qos_sat = {d_id: (deficits.get(d_id, 0.0) <= 0.0) for d_id in (opt.per_device_rates_bps.keys() if opt.per_device_rates_bps else [])}
+                
+                unused_sc = []
+                if hasattr(opt.rho, 'sum'):
+                    used_mask = _np.sum(opt.rho, axis=0)
+                    unused_sc = [i for i, val in enumerate(used_mask) if val == 0]
+
                 state.adaptive_alloc = AllocationDecision(
                     rho=opt.rho,
                     modulation_map=opt.modulation_map,
+                    predicted_ber_map={},
                     achievable_rates_bps=opt.per_device_rates_bps,
                     sum_rate_bps=opt.sum_rate_bps,
-                    active_subcarriers=opt.rho.sum(axis=0) > 0 if hasattr(opt.rho, 'sum') else None,
-                    qos_status=QoSStatus.FEASIBLE if (opt.constraint_status and opt.constraint_status.qos_satisfied) else QoSStatus.INFEASIBLE,
+                    qos_satisfied=qos_sat,
+                    qos_deficits_bps=deficits,
+                    unused_subcarriers=unused_sc,
+                    qos_status=QoSStatus.FEASIBLE.value if (qos and qos.qos_satisfied) else QoSStatus.INFEASIBLE_QOS.value,
                 )
 
                 # ── M7: PowerDecision → state.power ────────────────────────────

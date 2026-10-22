@@ -59,6 +59,7 @@ class VLCReceiver:
         # We remove the known DC bias applied by DCO-OFDM (stored in frame metadata)
         dc_bias = tx_frame.metadata.get("dc_bias", 0.0)
         ac_waveform = sync_waveform - dc_bias
+        drive_gain = tx_frame.metadata.get("drive_gain", 1.0)
         
         # 4. Demodulate OFDM signal back to frequency domain complex symbols
         rx_symbols, freq_grid = self.demodulator.demodulate(ac_waveform)
@@ -74,6 +75,7 @@ class VLCReceiver:
             h_eq = np.resize(channel_response, len(rx_symbols_trimmed))
         else:
             h_eq = channel_response
+        h_eq = h_eq * drive_gain
             
         equalized_symbols = self.equalizer.equalize(
             rx_symbols=rx_symbols_trimmed,

@@ -126,7 +126,8 @@ class IntegratedVLCLReceiver:
         rx_waveform: np.ndarray,
         transmitted_bits_dict: Dict[int, np.ndarray],
         physics_state: PhysicsState,
-        modulation_order_dict: Optional[Dict[int, Any]] = None
+        modulation_order_dict: Optional[Dict[int, Any]] = None,
+        drive_gains: Optional[Dict[int, float]] = None
     ) -> Dict[int, Dict[str, Any]]:
         """
         Processes the communication branch for all active LED groups/users:
@@ -182,7 +183,9 @@ class IntegratedVLCLReceiver:
             phase_rot = np.exp(-1j * 2.0 * np.pi * freqs * delay)
             
             # Full channel response includes electrical conversions
-            H_n = h_optical * h_led * phase_rot * electrical_gain
+            # Driver gain applied by DCO-OFDM at the transmitter (known to the receiver)
+            drive_gain = drive_gains.get(led_id, 1.0) if drive_gains else 1.0
+            H_n = h_optical * h_led * phase_rot * electrical_gain * drive_gain
             
             # Tile channel response for all OFDM frames
             H_n_tiled = np.tile(H_n, num_frames)

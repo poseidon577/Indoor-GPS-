@@ -123,7 +123,19 @@ class IntegratedVLCLEngine:
                 spacing_hz=self.loc_config.fp_spacing,
                 count=self.loc_config.fp_count
             )
-        
+
+        # Localization tones must sit on FFT bin centres, otherwise neighbouring
+        # tones collapse into one bin and the A-DPDOA solve is meaningless.
+        bin_spacing_hz = self.grid.sample_rate / self.grid.fft_size
+        if not self.plan.is_aligned_to_grid(bin_spacing_hz):
+            aligned_plan = self.plan.aligned_to_grid(bin_spacing_hz)
+            logger.warning(
+                f"IntegratedVLCLEngine: localization tones {self.plan.frequencies.tolist()} Hz "
+                f"are off the {bin_spacing_hz:.1f} Hz OFDM grid; snapped to "
+                f"{aligned_plan.frequencies.tolist()} Hz."
+            )
+            self.plan = aligned_plan
+
         # 2. Spectrum Partitioner & Power Mapper (Module 5 Core)
         self.partitioner = SpectrumPartitioner(
             grid=self.grid,
@@ -364,7 +376,8 @@ class IntegratedVLCLEngine:
             rx_waveform=rx_waveform,
             transmitted_bits_dict=tx_bits,
             physics_state=physics_state,
-            modulation_order_dict=orders
+            modulation_order_dict=orders,
+            drive_gains={led_id: m.get("drive_gain", 1.0) for led_id, m in clipping_metrics.items()}
         )
         
         # 4. Process localization branch
@@ -375,7 +388,9 @@ class IntegratedVLCLEngine:
         self.receiver.position_solver.led_positions = {
             int(led_id): np.array(pos) for led_id, pos in env_state.led_positions.items()
         }
-        self.receiver.position_solver.fixed_height = float(env_state.receiver_position[2])
+        # 2D mode assumes a nominal receiver height from config; the true height is
+        # ground truth and must not reach the solver.
+        self.receiver.position_solver.fixed_height = float(self.loc_config.fixed_height)
         self.receiver.position_solver.room_bounds = room_bounds
         
         loc_results = self.receiver.process_localization_branch(

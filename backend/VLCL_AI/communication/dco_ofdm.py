@@ -14,12 +14,17 @@ class DCOOFDM:
         dc_bias_sigma: float = 5.0,
         min_drive_current: float = 0.0,   # Minimum current below which LED turns off (clips)
         max_drive_current: float = 20.0,  # Maximum linear current (saturation)
-        enabled: bool = True
+        enabled: bool = True,
+        auto_drive_gain: bool = True
     ):
         self.dc_bias_sigma = dc_bias_sigma
         self.min_drive_current = min_drive_current
         self.max_drive_current = max_drive_current
         self.enabled = enabled
+        # The bipolar signal arrives in allocation units (sqrt of watts per subcarrier),
+        # not in drive current. Without a driver gain, a 3-sigma bias on a signal whose
+        # spread exceeds the LED's linear range pushes most samples into saturation.
+        self.auto_drive_gain = auto_drive_gain
 
     def process_transmitter_waveform(self, bipolar_signal: np.ndarray) -> Tuple[np.ndarray, Dict[str, Any]]:
         """
@@ -36,7 +41,8 @@ class DCOOFDM:
                 "papr_db": float(self.compute_papr(bipolar_signal)),
                 "clipping_ratio_pct": 0.0,
                 "clipping_distortion": 0.0,
-                "electrical_power": float(np.mean(bipolar_signal**2))
+                "electrical_power": float(np.mean(bipolar_signal**2)),
+                "drive_gain": 1.0
             }
             
         std_ac = np.std(bipolar_signal)
@@ -45,9 +51,17 @@ class DCOOFDM:
             
         # print(f"DEBUG DCO: min_sig={np.min(bipolar_signal):.2f}, max_sig={np.max(bipolar_signal):.2f}, std={std_ac:.2f}, limit_min={self.min_drive_current}, limit_max={self.max_drive_current}")
             
+        # 0. Driver gain: shrink the signal so bias +/- k*std fits the linear range
+        drive_gain = 1.0
+        linear_range = self.max_drive_current - self.min_drive_current
+        if self.auto_drive_gain and 2.0 * self.dc_bias_sigma * std_ac > linear_range:
+            drive_gain = linear_range / (2.0 * self.dc_bias_sigma * std_ac)
+        bipolar_signal = drive_gain * bipolar_signal
+        std_ac = drive_gain * std_ac
+
         # 1. Compute and apply DC bias
         # Bias is proportional to standard deviation: B_DC = k * std
-        dc_bias = self.dc_bias_sigma * std_ac
+        dc_bias = self.min_drive_current + self.dc_bias_sigma * std_ac
         biased_signal = bipolar_signal + dc_bias
         
         # 2. Clipping (minimum and maximum bounds of LED linear region)
@@ -75,7 +89,8 @@ class DCOOFDM:
             "clipping_ratio_pct": clipping_ratio_pct,
             "clipping_distortion": clipping_distortion,
             "electrical_power": electrical_power,
-            "dc_bias_power": float(dc_bias ** 2)
+            "dc_bias_power": float(dc_bias ** 2),
+            "drive_gain": float(drive_gain)
         }
         
         return clipped_signal, metrics

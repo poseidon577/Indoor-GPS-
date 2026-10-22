@@ -123,7 +123,19 @@ class IntegratedVLCLEngine:
                 spacing_hz=self.loc_config.fp_spacing,
                 count=self.loc_config.fp_count
             )
-        
+
+        # Localization tones must sit on FFT bin centres, otherwise neighbouring
+        # tones collapse into one bin and the A-DPDOA solve is meaningless.
+        bin_spacing_hz = self.grid.sample_rate / self.grid.fft_size
+        if not self.plan.is_aligned_to_grid(bin_spacing_hz):
+            aligned_plan = self.plan.aligned_to_grid(bin_spacing_hz)
+            logger.warning(
+                f"IntegratedVLCLEngine: localization tones {self.plan.frequencies.tolist()} Hz "
+                f"are off the {bin_spacing_hz:.1f} Hz OFDM grid; snapped to "
+                f"{aligned_plan.frequencies.tolist()} Hz."
+            )
+            self.plan = aligned_plan
+
         # 2. Spectrum Partitioner & Power Mapper (Module 5 Core)
         self.partitioner = SpectrumPartitioner(
             grid=self.grid,

@@ -388,7 +388,9 @@ class IntegratedVLCLEngine:
         self.receiver.position_solver.led_positions = {
             int(led_id): np.array(pos) for led_id, pos in env_state.led_positions.items()
         }
-        self.receiver.position_solver.fixed_height = float(env_state.receiver_position[2])
+        # 2D mode assumes a nominal receiver height from config; the true height is
+        # ground truth and must not reach the solver.
+        self.receiver.position_solver.fixed_height = float(self.loc_config.fixed_height)
         self.receiver.position_solver.room_bounds = room_bounds
         
         loc_results = self.receiver.process_localization_branch(

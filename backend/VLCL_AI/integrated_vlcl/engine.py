@@ -376,7 +376,8 @@ class IntegratedVLCLEngine:
             rx_waveform=rx_waveform,
             transmitted_bits_dict=tx_bits,
             physics_state=physics_state,
-            modulation_order_dict=orders
+            modulation_order_dict=orders,
+            drive_gains={led_id: m.get("drive_gain", 1.0) for led_id, m in clipping_metrics.items()}
         )
         
         # 4. Process localization branch

@@ -29,6 +29,17 @@ class TestDCOOFDM(unittest.TestCase):
         # Since it's clipped, distortion should be non-negative
         self.assertTrue(metrics["clipping_distortion"] >= 0.0)
 
+    def test_drive_gain_keeps_large_signal_in_linear_range(self):
+        # Signal spread far beyond the 0-2 drive range, as the integrated transmitter produces
+        rng = np.random.default_rng(7)
+        bipolar = rng.normal(loc=0.0, scale=5.0, size=10000)
+
+        clipped, metrics = self.dco.process_transmitter_waveform(bipolar)
+
+        self.assertLess(metrics["drive_gain"], 1.0)
+        self.assertLess(metrics["clipping_ratio_pct"], 1.0)
+        np.testing.assert_allclose(np.mean(clipped), 1.0, atol=0.05)
+
     def test_papr_calculation(self):
         # Constant signal should have 0 dB PAPR
         const_signal = np.ones(100)

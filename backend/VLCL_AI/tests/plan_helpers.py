@@ -39,3 +39,11 @@ def make_states(x, y, z=RX_HEIGHT, roll=0.0, pitch=0.0, nlos=True, led_power=10.
 
 def xy_error(estimate, x, y):
     return float(np.hypot(estimate[0] - x, estimate[1] - y))
+
+
+def paper_mode_engine():
+    """IntegratedVLCLEngine running the paper's A-DPDOA-only 2D solve at the nominal height."""
+    from VLCL_AI.integrated_vlcl.engine import IntegratedVLCLEngine
+    engine = IntegratedVLCLEngine()
+    engine.loc_config.solver_mode = "adpdoa"
+    return engine

@@ -24,15 +24,7 @@ def _loc(engine, x, y, **kw):
     return engine.step(env, ph).localization_results
 
 
-# ── A-DPDOA robustness ───────────────────────────────────────────────────────
-
-@pytest.mark.xfail(strict=True, reason="2D mode assumes 0.85 m; a phone held at 1.0 m is off by ~1 m")
-@pytest.mark.parametrize("z", [1.0, 1.1])
-def test_adpdoa_tolerates_realistic_phone_heights(z):
-    """People hold phones at different heights; xy accuracy must not collapse."""
-    errs = [xy_error(_loc(IntegratedVLCLEngine(), x, y, z=z, nlos=False)["estimated_position"], x, y)
-            for x, y in GRID_5x5[::2]]
-    assert np.mean(errs) < 0.05
+# A-DPDOA phone height (step 3A.4) is closed: see test_plan_step3a4_height.py.
 
 
 # ── Legacy dataset pipeline (dataset_generation/) ────────────────────────────

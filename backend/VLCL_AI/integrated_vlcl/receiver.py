@@ -314,6 +314,39 @@ class IntegratedVLCLReceiver:
     # tone still arrives off a wall, with the wall's delay) leave a large fit residual
     max_residual_rms_m = 0.05
 
+    def tone_rss(
+        self,
+        loc_phasors,
+        drive_gains: Optional[Dict[int, float]] = None,
+        led_optical_powers: Optional[Dict[int, float]] = None,
+        drive_reference: float = 1.0
+    ) -> Dict[int, float]:
+        """
+        Per-LED received signal strength read off the localization tones, as the
+        photocurrent (A) the LED's rated optical power gives through the measured
+        channel gain. An LED carrying two tones gets the mean of both readings.
+        """
+        from VLCL_AI.physics.constants import DEFAULT_RESPONSIVITY, DEFAULT_TRANSIMPEDANCE_GAIN
+        spacing = self.partitioner.grid.sample_rate / self.partitioner.grid.fft_size
+        readings: Dict[int, list] = {}
+        for tone_idx, freq in enumerate(self.partitioner.plan.frequencies):
+            leds = self.power_mapper.tone_to_led_map.get(tone_idx + 1, [])
+            if len(leds) != 1:
+                continue                      # a shared tone cannot be split between LEDs
+            led_id = leds[0]
+            bin_idx = int(round(freq / spacing))
+            tone_amp = np.sqrt(self.power_mapper.power_matrix[led_id - 1, bin_idx])
+            known = (tone_amp * (drive_gains or {}).get(led_id, 1.0)
+                     * self.optical_scale(led_id, led_optical_powers, drive_reference)
+                     * np.abs(self.led_response.complex_response(np.array([freq]))[0])
+                     * DEFAULT_RESPONSIVITY * DEFAULT_TRANSIMPEDANCE_GAIN)
+            if known <= 0:
+                continue
+            h = np.abs(loc_phasors[tone_idx]) / known
+            p_tx = (led_optical_powers or {}).get(led_id, 1.0)
+            readings.setdefault(led_id, []).append(DEFAULT_RESPONSIVITY * p_tx * h)
+        return {k: float(np.mean(v)) for k, v in readings.items()}
+
     @staticmethod
     def _at_room_boundary(p_est, pos_solver, tol_m: float = 1e-3) -> bool:
         bounds = pos_solver.room_bounds
@@ -331,7 +364,13 @@ class IntegratedVLCLReceiver:
         physics_state: PhysicsState,
         room_bounds: Tuple[float, float, float],
         true_position_only_for_eval: Optional[np.ndarray] = None,
-        prev_phases: Optional[np.ndarray] = None
+        prev_phases: Optional[np.ndarray] = None,
+        drive_gains: Optional[Dict[int, float]] = None,
+        led_optical_powers: Optional[Dict[int, float]] = None,
+        drive_reference: float = 1.0,
+        hybrid_solver=None,
+        receiver_normal: Optional[np.ndarray] = None,
+        height_prior_m: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Processes the localization branch:
@@ -382,6 +421,11 @@ class IntegratedVLCLReceiver:
                                 / (fft_size * max(1, num_frames)))
         tone_snr_db = 20.0 * np.log10(np.abs(np.array(loc_phasors)) / max(bin_noise_std, 1e-30) + 1e-30)
         tones_detected = bool(np.all(tone_snr_db >= self.min_tone_snr_db))
+
+        # RSS from the same tones: undo every gain the receiver knows (tone power, driver
+        # gain, LED power and frequency response, responsivity, TIA) to leave |H_channel|,
+        # then express it as the photocurrent the LED's rated power would give
+        tone_rss = self.tone_rss(loc_phasors, drive_gains, led_optical_powers, drive_reference)
         
         
         # 2. Phase unwrapping
@@ -412,11 +456,14 @@ class IntegratedVLCLReceiver:
                 )
             
             p_guess = None
-            p_est, solver_meta = pos_solver.solve(
-                distance_differences=distance_diffs,
-                initial_guess=p_guess,
-                strategy="previous_or_room_center"
-            )
+            if hybrid_solver is not None:
+                p_est, solver_meta = hybrid_solver.solve(distance_diffs, tone_rss, receiver_normal, height_prior_m)
+            else:
+                p_est, solver_meta = pos_solver.solve(
+                    distance_differences=distance_diffs,
+                    initial_guess=p_guess,
+                    strategy="previous_or_room_center"
+                )
         except SolverError:
             p_est = np.array([0.0, 0.0, 0.85])
             distance_diffs = np.array([])
@@ -426,7 +473,7 @@ class IntegratedVLCLReceiver:
         status = "VALID"
         if not tones_detected:
             status = "TONE_NOT_DETECTED"
-        elif solver_meta["success"] and self._at_room_boundary(p_est, pos_solver):
+        elif solver_meta["success"] and hybrid_solver is None and self._at_room_boundary(p_est, pos_solver):
             status = "AT_ROOM_BOUNDARY"
         elif solver_meta["success"] and len(solver_meta.get("residual", [])) and \
                 float(np.sqrt(np.mean(np.square(solver_meta["residual"])))) > self.max_residual_rms_m:
@@ -450,5 +497,6 @@ class IntegratedVLCLReceiver:
             "success": bool(solver_meta["success"]) and status == "VALID",
             "status": status,
             "tone_snr_db": tone_snr_db,
+            "tone_rss": tone_rss,
             "loc_phasors": loc_phasors
         }

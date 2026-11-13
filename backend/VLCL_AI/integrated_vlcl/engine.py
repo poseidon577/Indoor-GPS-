@@ -195,6 +195,7 @@ class IntegratedVLCLEngine:
         
         # Track previous phases across frames for unwrapping
         self.prev_phases = None
+        self._last_fix_z = None
         
         # Build receivers and transmitters
         self.transmitter = IntegratedVLCLTransmitter(
@@ -232,6 +233,34 @@ class IntegratedVLCLEngine:
             position_solver=self.position_solver,
             noise_seed=cfg_comm["simulation"]["random_seed"]
         )
+
+    def _hybrid_solver(self, env_state: EnvironmentState):
+        """A-DPDOA + RSS solver built from datasheet LED values and the room's geometry only."""
+        from VLCL_AI.localization.hybrid import HybridPositionSolver
+        from VLCL_AI.localization.rss import calibrate_led_constants
+        from VLCL_AI.environment.coordinate_system import infer_room_bounds
+        constants, orders = calibrate_led_constants(env_state)
+        return HybridPositionSolver(
+            led_positions=env_state.led_positions,
+            led_constants=constants,
+            lambertian_orders=orders,
+            bounds=infer_room_bounds(tuple(env_state.room_dims), env_state.led_positions),
+            fov_deg=env_state.receiver_hardware.fov_deg,
+            sigma_dd_m=self.loc_config.hybrid_sigma_dd_m,
+            sigma_log_rss=self.loc_config.hybrid_sigma_log_rss,
+        )
+
+    def _imu_normal(self, env_state: EnvironmentState) -> np.ndarray:
+        """The receiver's facing direction as its IMU reports it: true tilt plus IMU error."""
+        normal = np.asarray(env_state.receiver_orientation, dtype=float)
+        normal = normal / np.linalg.norm(normal)
+        sigma = np.radians(self.loc_config.imu_tilt_noise_deg)
+        if sigma > 0:
+            if not hasattr(self, "_imu_rng"):
+                self._imu_rng = np.random.default_rng(self.loc_config.imu_seed)
+            normal = normal + self._imu_rng.normal(0.0, sigma, 3)
+            normal = normal / np.linalg.norm(normal)
+        return normal
 
     def reset(self):
         """Resets engine states."""
@@ -400,18 +429,33 @@ class IntegratedVLCLEngine:
         self.receiver.position_solver.fixed_height = float(self.loc_config.fixed_height)
         self.receiver.position_solver.room_bounds = room_bounds
         
+        hybrid_solver, imu_normal = None, None
+        if self.loc_config.solver_mode == "hybrid":
+            hybrid_solver = self._hybrid_solver(env_state)
+            imu_normal = self._imu_normal(env_state)
+
         loc_results = self.receiver.process_localization_branch(
             rx_waveform=rx_waveform,
             t=t,
             physics_state=physics_state,
             room_bounds=room_bounds,
             true_position_only_for_eval=p_true,
-            prev_phases=self.prev_phases
+            prev_phases=self.prev_phases,
+            drive_gains={led_id: m.get("drive_gain", 1.0) for led_id, m in clipping_metrics.items()},
+            led_optical_powers=led_optical_powers,
+            drive_reference=drive_reference,
+            hybrid_solver=hybrid_solver,
+            receiver_normal=imu_normal,
+            # Height prior for the one ambiguous spot: the last trusted fix, else nominal height
+            height_prior_m=self._last_fix_z if self._last_fix_z is not None else float(self.loc_config.fixed_height)
         )
         
         # Track phases only from a trusted fix: a step whose tones were lost or whose
         # solve failed would otherwise offset every later step by a whole turn
         self.prev_phases = loc_results.get("unwrapped_phases") if loc_results.get("success") else None
+        # Only an unambiguous fix may serve as the height prior, or one wrong pick would stick
+        if loc_results.get("success") and not loc_results["solver_meta"].get("height_ambiguous", False):
+            self._last_fix_z = float(loc_results["estimated_position"][2])
         
         # Compile transmitter performance maps
         papr_per_led = {led_id: metrics["papr_db"] for led_id, metrics in clipping_metrics.items()}

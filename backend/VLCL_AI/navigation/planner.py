@@ -37,7 +37,10 @@ class NavModel:
     drift_table: Tuple[Tuple[float, ...], Tuple[float, ...]] = (
         (0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 15.0, 30.0),
         (0.0, 0.087, 0.262, 0.449, 0.646, 0.901, 1.702, 4.0))
-    reliable_fix_rate: float = 0.5
+    # A cell resets the drift only if it gives a fix this often. 0.5 let 4-7 % of walkers
+    # onto the stairs on the measured map (fix rates in the dim corridor are partial);
+    # 0.8 and 0.9 both gave 0 % (sensitivity reported in the results).
+    reliable_fix_rate: float = 0.8
     hazard_margin_m: float = 0.0
 
     def drift_sigma(self, dark_m: float) -> float:

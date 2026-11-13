@@ -144,6 +144,8 @@ class IntegratedVLCLEngine:
             guard_width=1
         )
         
+        self._default_comm_groups = {g: list(v) for g, v in self.partitioner.comm_groups.items()}
+
         self.led_response = LEDFrequencyResponse(
             model_type=cfg_comm["led_frequency_response"]["model"],
             cutoff_frequency_hz=cfg_comm["led_frequency_response"]["cutoff_frequency_hz"]
@@ -233,6 +235,90 @@ class IntegratedVLCLEngine:
             position_solver=self.position_solver,
             noise_seed=cfg_comm["simulation"]["random_seed"]
         )
+
+    def predicted_drive_gain(self, power_row: np.ndarray, comm_bins) -> float:
+        """
+        The DCO driver gain the transmitter will apply for one LED's power row.
+        Comm symbols have unit mean energy and pass an IFFT with 1/N, so their time
+        variance is sum(p_n)/N^2 over the used +/- bins; a tone of power P is a cosine
+        of amplitude 2*sqrt(P), variance 2P.
+        """
+        N = self.grid.fft_size
+        comm_bins = [int(n) for n in comm_bins]
+        var = float(np.sum(power_row[comm_bins])) / N ** 2
+        spacing = self.grid.sample_rate / N
+        for tone_idx, freq in enumerate(self.plan.frequencies):
+            b = int(round(freq / spacing))
+            var += 2.0 * float(power_row[b]) if power_row[b] > 0 else 0.0
+        std = max(np.sqrt(var), 1e-12)
+        dco = self.dco_engine
+        linear_range = dco.max_drive_current - dco.min_drive_current
+        if getattr(dco, "auto_drive_gain", True) and 2.0 * dco.dc_bias_sigma * std > linear_range:
+            return linear_range / (2.0 * dco.dc_bias_sigma * std)
+        return 1.0
+
+    def subcarrier_snr_matrix(
+        self,
+        env_state: EnvironmentState,
+        physics_state: PhysicsState,
+        power_matrix: Optional[np.ndarray] = None,
+        comm_bins: Optional[Dict[int, List[int]]] = None
+    ) -> np.ndarray:
+        """
+        Per-LED, per-subcarrier SNR (linear) exactly as the receiver's equaliser sees it:
+        |H_n|^2 p_n / noise_var, with H_n the full chain (LED power, driver gain, LED
+        response, optical channel incl. reflections, responsivity, TIA). This is the one
+        SNR model Modules 6 and 8 should allocate on; physics_state.snrs is the DC
+        photocurrent SNR and is ~40 dB higher than any subcarrier's.
+        A subcarrier with zero power gets the SNR it would have at unit power.
+        """
+        from VLCL_AI.physics.constants import DEFAULT_RESPONSIVITY, DEFAULT_TRANSIMPEDANCE_GAIN
+        N = self.grid.fft_size
+        pm = self.power_mapper.power_matrix if power_matrix is None else power_matrix
+        groups = comm_bins or self.partitioner.comm_groups
+        freqs = np.arange(N) * (self.grid.sample_rate / N)
+        led_powers = {int(k): float(v) for k, v in env_state.led_powers.items()}
+        drive_ref = 0.5 * (self.dco_engine.min_drive_current + self.dco_engine.max_drive_current)
+        noise_var = (self.receiver.sample_noise_variance(physics_state)
+                     * DEFAULT_TRANSIMPEDANCE_GAIN ** 2 * N)
+        h_led = self.led_response.complex_response(freqs)
+        snr = np.zeros((self.num_leds, N))
+        for led_id in range(1, self.num_leds + 1):
+            row = pm[led_id - 1]
+            dg = self.predicted_drive_gain(row, groups.get(led_id, []))
+            H = (self.receiver.optical_scale(led_id, led_powers, drive_ref)
+                 * self.receiver.channel_response(led_id, freqs, physics_state)
+                 * h_led * DEFAULT_RESPONSIVITY * DEFAULT_TRANSIMPEDANCE_GAIN * dg)
+            # Bins without power yet are rated at the mean power of this LED's used comm bins
+            used = [int(n) for n in groups.get(led_id, []) if row[int(n)] > 0]
+            p_fill = float(np.mean(row[used])) if used else 1.0
+            p = np.where(row > 0, row, p_fill)
+            snr[led_id - 1] = np.abs(H) ** 2 * p / noise_var
+        return snr
+
+    def _fit_modulation_to_power(self, allocation_decision, env_state, physics_state) -> None:
+        """Caps each allocated subcarrier's QAM order at what its SNR supports; updates rates."""
+        snr = self.subcarrier_snr_matrix(env_state, physics_state)
+        supported, _, _ = self.adaptive_engine.modulation_controller.process_snr_matrix(snr)
+        num_leds = snr.shape[0]
+        fitted, lowered = {}, 0
+        for (dev_id, n), m in allocation_decision.modulation_map.items():
+            led_idx = (dev_id - 1) % num_leds
+            m_ok = int(min(m, supported[led_idx, n]))
+            lowered += int(m_ok < m)
+            if m_ok >= 2:
+                fitted[(dev_id, n)] = m_ok
+        allocation_decision.modulation_map = fitted
+        # Rates recomputed with Module 6's own rate convention
+        dev_ids = list(allocation_decision.achievable_rates_bps.keys())
+        M = np.zeros_like(allocation_decision.rho, dtype=int)
+        for (dev_id, n), m in fitted.items():
+            if dev_id in dev_ids:
+                M[dev_ids.index(dev_id), n] = m
+        rates = self.adaptive_engine.rate_evaluator.compute_device_rates(allocation_decision.rho, M, dev_ids)
+        allocation_decision.achievable_rates_bps = rates
+        allocation_decision.sum_rate_bps = float(sum(rates.values()))
+        allocation_decision.diagnostics = dict(allocation_decision.diagnostics or {}, bit_loading_lowered=lowered)
 
     def _hybrid_solver(self, env_state: EnvironmentState):
         """A-DPDOA + RSS solver built from datasheet LED values and the room's geometry only."""
@@ -334,20 +420,11 @@ class IntegratedVLCLEngine:
         """
         # Module 6 Adaptive Integration
         if adaptive_mode and allocation_decision is None:
-            # SSOT FIX: Read SNR from state.physics (Module 2 output) instead of
-            # recomputing with a bootstrap seed power. Module 2 is the single owner
-            # of SNR values; duplicating the computation here was an audit finding.
-            # We build the snr_matrix from physics_state.snrs (per-LED scalar SNR)
-            # broadcast across all subcarriers as a conservative flat-spectrum estimate.
             num_leds = env_state.num_leds if env_state.num_leds > 0 else len(env_state.led_positions)
-            N = self.grid.fft_size
-            snr_matrix = np.zeros((num_leds, N), dtype=float)
-
-            for k, led_id in enumerate(env_state.led_ids or list(env_state.led_positions.keys())):
-                # physics_state.snrs holds the per-LED SNR in dB (Module 2 SSOT)
-                snr_db = physics_state.snrs.get(led_id, 0.0)
-                # Convert dB to linear for the adaptive allocation SNR matrix
-                snr_matrix[k, :] = 10.0 ** (snr_db / 10.0)
+            # Per-subcarrier SNR from the receiver's own chain model at the current
+            # power plan (was: the DC photocurrent SNR broadcast to every subcarrier,
+            # ~40 dB optimistic, which put 256-QAM everywhere and broke BER)
+            snr_matrix = self.subcarrier_snr_matrix(env_state, physics_state)[:num_leds]
                 
             dev_ids = list(range(1, num_leds + 1))
             # A-5 FIX: DEFAULT_MIN_RATE_BPS is a named constant, not a magic literal 1.0e6
@@ -368,13 +445,29 @@ class IntegratedVLCLEngine:
                 localization_reserve_w=localization_reserve_w
             )
             
+        # The transmitter and receiver must use the subcarriers the allocation chose
+        if allocation_decision is not None and getattr(allocation_decision, "rho", None) is not None:
+            alloc_ids = list(allocation_decision.achievable_rates_bps.keys()) if allocation_decision.achievable_rates_bps \
+                else list(range(1, allocation_decision.rho.shape[0] + 1))
+            self.partitioner.assign_comm_groups(allocation_decision.rho, alloc_ids)
+        else:
+            self.partitioner.comm_groups = {g: list(v) for g, v in self._default_comm_groups.items()}
+
         if power_decision is not None:
             # §10 FIX: use set_power_matrix() accessor (validates shape) instead of direct attribute mutation
             self.power_mapper.set_power_matrix(power_decision.power_allocation.per_subcarrier_power_matrix)
 
+        # Module 6 chose modulations before Module 7 set the powers. Re-rate every
+        # allocated subcarrier at the powers actually loaded and lower its modulation
+        # where that SNR cannot carry it at the BER target (bit loading).
+        if allocation_decision is not None and getattr(allocation_decision, "modulation_map", None):
+            self._fit_modulation_to_power(allocation_decision, env_state, physics_state)
+
         # Determine modulation orders and bits
         if allocation_decision is not None and hasattr(allocation_decision, "modulation_map"):
-            orders = {}
+            # A device whose every carrier was dropped sends nothing (an empty map), not
+            # the transmitter's 16-QAM default on carriers that cannot carry it
+            orders = {led_id: {} for led_id in range(1, self.power_mapper.num_leds + 1)}
             for (dev_id, sc_idx), m in allocation_decision.modulation_map.items():
                 if dev_id not in orders:
                     orders[dev_id] = {}

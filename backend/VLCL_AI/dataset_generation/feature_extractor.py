@@ -21,6 +21,9 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 
 
+MAX_LEDS = 16   # matches env_num_leds' schema range
+
+
 def _safe(value: Any, default: float = float("nan")) -> Any:
     """Returns value if finite, else default. Handles None gracefully."""
     if value is None:
@@ -74,12 +77,11 @@ class FeatureExtractor:
             return self._nan_dict([
                 "env_room_width", "env_room_length", "env_room_height",
                 "env_wall_reflectivity", "env_floor_reflectivity", "env_ceiling_reflectivity",
-                "env_num_leds", "env_rx_x", "env_rx_y", "env_rx_z", "env_rx_fov_deg",
+                "env_num_leds", "env_rx_fov_deg",
                 "env_num_obstacles", "env_mobility_type", "env_rx_speed_ms",
                 "env_simulation_time", "env_frame_index",
             ])
 
-        rx = env.receiver_position
         dims = env.room_dims if env.room_dims else [0, 0, 0]
         vel = env.receiver_velocity if hasattr(env, "receiver_velocity") and env.receiver_velocity else [0, 0, 0]
         speed = float(np.linalg.norm(np.array(vel[:2])))
@@ -101,9 +103,8 @@ class FeatureExtractor:
             "env_floor_reflectivity":   _safe(getattr(env, "floor_reflectivity", float("nan"))),
             "env_ceiling_reflectivity": _safe(getattr(env, "ceiling_reflectivity", float("nan"))),
             "env_num_leds":             _safe(env.num_leds, 0),
-            "env_rx_x":                 _safe(rx[0]),
-            "env_rx_y":                 _safe(rx[1]),
-            "env_rx_z":                 _safe(rx[2]),
+            # The receiver's true position is a label (label_gt_x/y/z), never a feature:
+            # a model trained with it as an input just copies it
             "env_rx_fov_deg":           _safe(fov),
             "env_num_obstacles":        num_obs,
             "env_mobility_type":        str(getattr(env, "mobility_type", "")),
@@ -121,7 +122,7 @@ class FeatureExtractor:
                 "phys_avg_snr_db", "phys_min_snr_db", "phys_max_snr_db",
                 "phys_avg_los_gain", "phys_avg_nlos_gain", "phys_avg_received_power_w",
                 "phys_avg_noise_variance", "phys_num_los_links", "phys_total_received_power_w",
-            ])
+            ] + [f"phys_received_power_w_{i}" for i in range(1, MAX_LEDS + 1)])
 
         snr_vals = list(phys.snrs.values()) if phys.snrs else [float("nan")]
         los_vals = list(phys.los_gains.values()) if hasattr(phys, "los_gains") and phys.los_gains else [float("nan")]
@@ -142,6 +143,10 @@ class FeatureExtractor:
             "phys_avg_noise_variance":  _safe(float(np.nanmean(nv_vals))),
             "phys_num_los_links":       num_los,
             "phys_total_received_power_w": _safe(float(np.nansum([v for v in pwr_vals if not math.isnan(v)]))),
+            # Per-LED received power (what a photodiode separates by each LED's tone): the
+            # RSS fingerprint a localization model needs. NaN for LED slots not in the scene.
+            **{f"phys_received_power_w_{i}": _safe(phys.received_powers.get(i, float("nan")) if phys.received_powers else float("nan"))
+               for i in range(1, MAX_LEDS + 1)},
         }
 
     # ── Communication ──────────────────────────────────────────────────────────

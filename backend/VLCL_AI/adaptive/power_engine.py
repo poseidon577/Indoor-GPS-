@@ -178,7 +178,9 @@ class PowerPreEqualizationEngine:
                 f_tone = tone_freq_map[t_id]
                 idx = int(round(f_tone / grid.subcarrier_spacing))
                 if 0 < idx < N // 2:
-                    p_tone = loc_reserves[led_id] / 2.0
+                    # The reserve covers all of this LED's tones (LED 1 carries two),
+                    # each split over its +f and -f bins
+                    p_tone = loc_reserves[led_id] / (2.0 * len(mapped_tones))
                     power_matrix[led_id - 1, idx] = p_tone
                     power_matrix[led_id - 1, N - idx] = p_tone
 

@@ -1,7 +1,7 @@
 # Test plan by project step
 
-Run everything from `backend/`: `PYTHONPATH=. python -m pytest -q` (about 40 s).
-Expected result: all pass except one skip and the strict expected failures listed under step 3.
+Run everything from `backend/`: `PYTHONPATH=. python -m pytest -q` (about 6 min).
+Expected result: all pass except one skip. Every step-3 gap below is closed; none is left as an expected failure.
 
 ## Rules these tests follow
 
@@ -24,28 +24,29 @@ snapping disabled, error is over 10 cm**.
 | File | Covers |
 |---|---|
 | `test_plan_step2_drive_gain.py` | Small signals untouched; exact gain into range for σ from 0.5 to 50; waveform shape kept; centre links error-free; corner links within FEC; **drive gain off → over 40 % clipping and broken BER**; **receiver ignoring the gain → bit errors** |
-| `test_plan_step2_height_and_rss.py` | Solver uses the configured height, never the true height; a wrong height costs accuracy; calibration independent of receiver pose; RSS falls with distance; zero outside the FOV; noise unbiased and never negative; exact over the 25-point cell; 3 LEDs enough in 2D but not 3D; estimate bounded; error grows with noise, NLOS and tilt |
+| `test_plan_step2_height_and_rss.py` | (paper mode) Solver uses the configured height, never the true height; a wrong height costs accuracy; calibration independent of receiver pose; RSS falls with distance; zero outside the FOV; noise unbiased and never negative; exact over the 25-point cell; 3 LEDs enough in 2D but not 3D; estimate bounded; error grows with noise, NLOS and tilt |
 | `test_rss_localization.py` | Original RSS unit tests |
 | `test_plan_step2_task1_experiment.py` | Feature/label column split; **no feature mirrors a label** (corr < 0.99); reproducible seeds; IMU tilt noisy, not exact; a pose that hides 2 LEDs does not poison the next pose (**mutation-checked**); feature builder; tilt-bin summary; MLP training sanity |
 
-## Step 3: limitations (strict expected failures)
+## Step 3A: limitations found and fixed
 
-`test_plan_step3_known_gaps.py` and `../../test_pipeline.py`:
+Each gap was first a strict `xfail` spec, confirmed to fail, then fixed; the spec became a passing test.
 
-1. A-DPDOA never recovers after a pose that hides 2 LEDs (`prev_phases`).
-2. A-DPDOA reports success while its estimate is pinned to the room corner.
-3. A phone held at 1.0–1.1 m is off by about 1 m (2D mode assumes 0.85 m).
-4. Localization does not degrade at 4 dB physics SNR, because the waveform ignores LED optical power.
-5. The far LED fails to decode despite 58 dB physics SNR (same root cause).
-6. NLOS is zero at most cell points, because the reflection walls assume a room spanning [0, W].
-7. Reflected light carries no extra delay.
-8. Legacy dataset features copy the true receiver x and y.
-9. Legacy dataset features have no per-LED RSS.
-10. The joint optimizer finds no feasible operating point.
-11. `VLCLPipeline` (all modules end to end) cannot be constructed.
+| Gap | Fix | Tests |
+|---|---|---|
+| Waveform ignored LED optical power, so chain SNR was decoupled from physics; far LED failed to decode | LED power and combined photodiode noise carried through the chain | `test_plan_step3a1_signal_noise.py`: noise formula; error grows as lights dim; far LED within FEC; measured symbol noise = MMSE prediction within 1 dB |
+| Reflections used the wrong room frame (zero at most points) and had no delay | Room frame inferred from the LEDs; reflections as a delayed tap | `test_plan_step3a2_reflections.py`: mirror symmetry (+ wrong-frame guard); gain vs independent brute-force integral within 5 %; patch convergence; reflected light arrives later; RSS bias in a ceiling room |
+| A-DPDOA never recovered after a pose hiding 2 LEDs; reported success when pinned to a corner or when a hidden LED's tone came off a wall | Tone-SNR, boundary and residual checks with a status reason; phases tracked only after a VALID fix | `test_plan_step3a3_adpdoa_robustness.py` (mutation-checked): no false success over 150 random poses, no good pose rejected, recovery within 3 steps of every dropout on a 200-step walk |
+| Phone height: paper's 2D solve is 4–8 cm off at 0.6–1.0 m even with all LEDs visible | Hybrid 3D solve: A-DPDOA distance differences + RSS read off the same tones + IMU tilt; flags the one ambiguous spot | `test_plan_step3a4_height.py`: tone RSS = LOS photocurrent; < 2 cm mean at 0.6–1.1 m and 0–15° tilt; no fix when an LED is hidden; height within 3 cm away from the ambiguous spot; the ambiguity is real (both roots fit exactly); guards: paper mode still off, IMU tilt needed |
+| `VLCLPipeline` could not be built; adaptive mode lost the tones (short bursts, wrong tone plan); Module 6 used DC SNR (256-QAM everywhere, BER 5–19 %); allocation ignored; LED 1 got double the tone reserve; joint optimizer never feasible; legacy dataset leaked the true position and had no per-LED RSS | See the file's docstring for the 7 fixes | `test_plan_step3a5_plumbing.py`: pipeline localizes and meets BER in all 3 modes; one SNR model matches measurement within 1 dB; bit loading never exceeds supported order (+ guard); optimizer feasible at 3 poses, honestly infeasible in dim light; no position leak; per-LED RSS |
 
-Not covered yet: whether the DL model generalises to other rooms and LED layouts. This needs a
-multi-room dataset first.
+The 1 m errors first reported for a phone at 1.0 m came from poses with an LED out of view that were
+not yet rejected; with 3A.3 those poses are reported as `TONE_NOT_DETECTED`, and the remaining height
+error on visible poses is the 4–8 cm the hybrid solve removes.
+
+Known, not yet addressed: Module 6's rate evaluator assumes a 20 MHz / 256 subcarrier width while the
+grid runs at 50 MHz, so reported rates are a factor 2.5 low; generalisation to other rooms and layouts
+needs the step-3B multi-room dataset.
 
 ## Step 4: novelty and paper
 

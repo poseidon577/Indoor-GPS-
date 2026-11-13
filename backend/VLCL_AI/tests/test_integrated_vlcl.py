@@ -156,5 +156,27 @@ class TestIntegratedVLCL(unittest.TestCase):
             self.assertIn(led_id, state.clipping_ratio_per_led)
             self.assertGreater(state.papr_per_led[led_id], 0.0)
 
+    def test_default_plan_is_snapped_to_ofdm_grid(self):
+        """Default 1.0-1.4 MHz tones are off the 195.3 kHz grid; each must still get its own bin."""
+        engine = IntegratedVLCLEngine()
+        bin_spacing = engine.grid.sample_rate / engine.grid.fft_size
+
+        self.assertTrue(engine.plan.is_aligned_to_grid(bin_spacing))
+        bins = [int(round(f / bin_spacing)) for f in engine.plan.frequencies]
+        self.assertEqual(len(set(bins)), 5, f"Localization tones share FFT bins: {bins}")
+
+    def test_default_engine_localizes_off_centre(self):
+        """With clipping off, the default engine must recover an off-centre position, not just the centre."""
+        receiver = Receiver([0.2, 0.1, 0.85], [0.0, 0.0, 1.0], noise=0.0)
+        simulator = VLCLSimulator(Scene(self.room, receiver, self.leds), MobilityEngine("static", speed=0.0))
+        env_state = simulator.get_state()
+        physics_state = self.physics.step(env_state)
+
+        engine = IntegratedVLCLEngine()
+        engine.dco_engine.enabled = False
+        loc_res = engine.step(env_state, physics_state).localization_results
+
+        self.assertLess(loc_res["error_3d_m"], 0.01)
+
 if __name__ == '__main__':
     unittest.main()

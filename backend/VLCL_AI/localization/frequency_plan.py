@@ -57,6 +57,29 @@ class LocalizationFrequencyPlan:
             
         # Duplicate detection (is implicitly covered by diffs > 0)
 
+    def is_aligned_to_grid(self, bin_spacing_hz: float, rtol: float = 1e-6) -> bool:
+        """True if every tone sits exactly on an FFT bin centre of the given spacing."""
+        bins = self._frequencies / bin_spacing_hz
+        return bool(np.allclose(bins, np.round(bins), rtol=0.0, atol=rtol))
+
+    def aligned_to_grid(self, bin_spacing_hz: float) -> "LocalizationFrequencyPlan":
+        """
+        Returns a copy of this plan snapped onto an OFDM grid of the given bin spacing.
+
+        Tones that fall between FFT bins are rounded to different bins by the
+        spectrum partitioner, so two LEDs can end up sharing one bin and the
+        transmitted tones stop forming an arithmetic progression. A-DPDOA then
+        solves Eq. (16) with the wrong frequencies. Snapping start and spacing to
+        whole bins keeps the plan consistent with what is actually transmitted.
+        """
+        start_bin = max(1, int(round(self.start_frequency_hz / bin_spacing_hz)))
+        step_bins = max(1, int(round(self.spacing_hz / bin_spacing_hz)))
+        return LocalizationFrequencyPlan(
+            start_frequency_hz=start_bin * bin_spacing_hz,
+            spacing_hz=step_bins * bin_spacing_hz,
+            count=self.count
+        )
+
     def get_spacing(self) -> float:
         """Returns the subcarrier/spacing frequency delta f."""
         return self.spacing_hz

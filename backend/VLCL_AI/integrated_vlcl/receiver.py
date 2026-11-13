@@ -48,10 +48,36 @@ class IntegratedVLCLReceiver:
         
         self.fft_size = self.partitioner.grid.fft_size
 
+    def sample_noise_variance(self, physics_state: PhysicsState) -> float:
+        """
+        Per-sample photocurrent noise variance (A^2) of the simulated waveform.
+
+        Uses the photodiode's combined noise (all LEDs at once) when physics provides
+        it, rescaled from the physics noise bandwidth to the waveform's Nyquist band:
+        white noise sampled at fs spreads over fs / 2.
+        """
+        if physics_state.total_noise_variance > 0.0:
+            var = physics_state.total_noise_variance
+            if physics_state.noise_bandwidth_hz > 0.0:
+                var *= (self.partitioner.grid.sample_rate / 2.0) / physics_state.noise_bandwidth_hz
+            return float(var)
+        if physics_state.noise_variances:
+            return float(np.mean(list(physics_state.noise_variances.values())))
+        return 1e-12
+
+    @staticmethod
+    def optical_scale(led_id: int, led_optical_powers: Optional[Dict[int, float]], drive_reference: float) -> float:
+        """Watts of optical power per drive unit: the LED emits its rated power at the reference drive."""
+        if led_optical_powers is None:
+            return 1.0
+        return float(led_optical_powers.get(led_id, 1.0)) / drive_reference
+
     def propagate_composite(
         self,
         unipolar_signals_dict: Dict[int, np.ndarray],
-        physics_state: PhysicsState
+        physics_state: PhysicsState,
+        led_optical_powers: Optional[Dict[int, float]] = None,
+        drive_reference: float = 1.0
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Propagates the multi-LED transmitted waveforms through the physical channels,
@@ -76,7 +102,7 @@ class IntegratedVLCLReceiver:
         
         # 1. Propagate each LED's signal through its frequency-selective channel
         for led_id, s_tx in unipolar_signals_dict.items():
-            h_optical = physics_state.total_gains.get(led_id, 0.0)
+            h_optical = physics_state.total_gains.get(led_id, 0.0) * self.optical_scale(led_id, led_optical_powers, drive_reference)
             h_led = self.led_response.complex_response(freqs_N)
             
             # Apply continuous propagation delay in frequency domain
@@ -108,8 +134,7 @@ class IntegratedVLCLReceiver:
             composite_rx_clean += rx_led
             
         # 2. Add lumped white receiver noise
-        noise_var = np.mean(list(physics_state.noise_variances.values())) if physics_state.noise_variances else 1e-12
-        std_noise = np.sqrt(noise_var)
+        std_noise = np.sqrt(self.sample_noise_variance(physics_state))
         
         if self.noise_seed is not None:
             rng = np.random.default_rng(self.noise_seed)
@@ -127,7 +152,9 @@ class IntegratedVLCLReceiver:
         transmitted_bits_dict: Dict[int, np.ndarray],
         physics_state: PhysicsState,
         modulation_order_dict: Optional[Dict[int, Any]] = None,
-        drive_gains: Optional[Dict[int, float]] = None
+        drive_gains: Optional[Dict[int, float]] = None,
+        led_optical_powers: Optional[Dict[int, float]] = None,
+        drive_reference: float = 1.0
     ) -> Dict[int, Dict[str, Any]]:
         """
         Processes the communication branch for all active LED groups/users:
@@ -174,7 +201,7 @@ class IntegratedVLCLReceiver:
             rx_symbols_user = freq_grid[:, independent_pos].flatten()
             
             # Map channel response H_n for these specific subcarriers
-            h_optical = physics_state.total_gains.get(led_id, 0.0)
+            h_optical = physics_state.total_gains.get(led_id, 0.0) * self.optical_scale(led_id, led_optical_powers, drive_reference)
             freqs = np.array(independent_pos) * (sample_rate / self.fft_size)
             h_led = self.led_response.complex_response(freqs)
             
@@ -191,7 +218,9 @@ class IntegratedVLCLReceiver:
             H_n_tiled = np.tile(H_n, num_frames)
             
             # Retrieve noise variance for MMSE
-            noise_var = physics_state.noise_variances.get(led_id, 1e-12)
+            # Noise per FFT bin in the units of the received symbols: sample noise through
+            # the TIA, times N because the demodulator's FFT is unnormalised
+            noise_var = self.sample_noise_variance(physics_state) * DEFAULT_TRANSIMPEDANCE_GAIN ** 2 * self.fft_size
             
             # Retrieve subcarrier powers used at TX
             p_comm = self.power_mapper.power_matrix[led_id - 1, independent_pos]

@@ -45,6 +45,11 @@ class PhysicsState:
     channel_matrix: List[List[float]]
     coverage_map: Dict[str, Any]
     metrics: Dict[str, Any]
+    # One photodiode sees every LED at once, so its shot noise comes from the summed
+    # photocurrent and thermal/background noise is counted once, not once per LED.
+    # Both default to 0.0 for hand-built states; consumers fall back to noise_variances.
+    total_noise_variance: float = 0.0
+    noise_bandwidth_hz: float = 0.0
 
 class PhysicsEngine:
     def __init__(self, config_path: Optional[str] = None):
@@ -270,6 +275,16 @@ class PhysicsEngine:
             "signal_strength_category": "Strong" if metrics["average_snr"] > 25 else "Moderate" if metrics["average_snr"] > 15 else "Weak"
         }
         
+        # Noise at the photodiode with all LEDs on together
+        combined_noise = total_noise_variance(
+            signal_current=float(sum(electrical_currents.values())),
+            tia_gain=self.config["tia_gain"],
+            bandwidth=self.config["bandwidth"],
+            temperature=self.config["ambient_temperature"],
+            background_current=self.config["background_current"],
+            config=self.config["noise_config"]
+        )
+
         # Assemble PhysicsState
         state = PhysicsState(
             distances=distances,
@@ -287,7 +302,9 @@ class PhysicsEngine:
             snrs=snrs,
             channel_matrix=self.channel_estimator.get_channel_matrix().tolist(),
             coverage_map=coverage_map,
-            metrics=metrics
+            metrics=metrics,
+            total_noise_variance=float(combined_noise["total_variance"]),
+            noise_bandwidth_hz=float(self.config["bandwidth"])
         )
         
         self.last_state = state

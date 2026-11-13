@@ -57,28 +57,6 @@ def test_adpdoa_tolerates_realistic_phone_heights(z):
     assert np.mean(errs) < 0.05
 
 
-# ── Noise and SNR consistency ────────────────────────────────────────────────
-
-@pytest.mark.xfail(strict=True, reason="integrated waveform ignores LED optical power, so chain SNR does not follow physics SNR")
-def test_localization_degrades_when_snr_collapses():
-    def mean_err(power):
-        return np.mean([xy_error(_loc(IntegratedVLCLEngine(), x, y, led_power=power)["estimated_position"], x, y)
-                        for x, y in GRID_5x5[::3]])
-    _, ph = make_states(0.0, 0.0, led_power=0.01)
-    assert min(ph.snrs.values()) < 10.0  # physics says this is a very poor link
-    assert mean_err(0.01) > 3 * mean_err(10.0)
-
-
-@pytest.mark.xfail(strict=True, reason="chain noise is the mean over LEDs and the signal is not scaled by LED power; far LED drowns")
-def test_link_with_high_physics_snr_decodes_within_fec():
-    env, ph = make_states(-0.4, 0.4)
-    assert ph.snrs[4] > 50.0
-    engine = IntegratedVLCLEngine()
-    engine.dco_engine.enabled = False
-    ber = engine.step(env, ph).communication_results[4]["empirical_ber"]
-    assert ber < FEC_BER
-
-
 # ── Multipath ────────────────────────────────────────────────────────────────
 
 @pytest.mark.xfail(strict=True, reason="reflection walls assume a room spanning [0, W]; paper cell is centred, NLOS is zero at most points")

@@ -366,9 +366,14 @@ class IntegratedVLCLEngine:
         )
         
         # 2. Propagate composite waveforms to the receiver
+        # The LED emits its rated optical power at the middle of its linear drive range
+        led_optical_powers = {int(k): float(v) for k, v in env_state.led_powers.items()}
+        drive_reference = 0.5 * (self.dco_engine.min_drive_current + self.dco_engine.max_drive_current)
         rx_waveform, t = self.receiver.propagate_composite(
             unipolar_signals_dict=unipolar_signals,
-            physics_state=physics_state
+            physics_state=physics_state,
+            led_optical_powers=led_optical_powers,
+            drive_reference=drive_reference
         )
         
         # 3. Process communication branch
@@ -377,7 +382,9 @@ class IntegratedVLCLEngine:
             transmitted_bits_dict=tx_bits,
             physics_state=physics_state,
             modulation_order_dict=orders,
-            drive_gains={led_id: m.get("drive_gain", 1.0) for led_id, m in clipping_metrics.items()}
+            drive_gains={led_id: m.get("drive_gain", 1.0) for led_id, m in clipping_metrics.items()},
+            led_optical_powers=led_optical_powers,
+            drive_reference=drive_reference
         )
         
         # 4. Process localization branch

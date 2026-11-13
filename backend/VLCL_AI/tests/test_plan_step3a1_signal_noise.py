@@ -59,32 +59,31 @@ def test_link_with_high_physics_snr_decodes_within_fec():
 
 def test_measured_symbol_noise_matches_prediction():
     """
-    Run the same frame with and without receiver noise; the difference of the
-    equalised symbols is pure noise. Its power must match the analytic value
-    noise_bin / (|H|^2 p) within 1 dB, per LED.
+    Run the same frame twice with different receiver-noise seeds; the difference of
+    the equalised symbols is pure noise with twice the per-run variance, which must
+    match the analytic MMSE value |w|^2 * noise_bin within 1 dB, per LED.
     """
     env, ph = make_states(0.1, -0.1, led_power=0.1)
-    quiet = dataclasses.replace(ph, total_noise_variance=1e-40)
 
-    def run(state):
-        np.random.seed(5)
+    def run(seed):
+        np.random.seed(5)  # same payload
         engine = IntegratedVLCLEngine()
         engine.dco_engine.enabled = False
-        return engine, engine.step(env, state).communication_results
+        engine.receiver.noise_seed = seed
+        return engine, engine.step(env, ph).communication_results
 
-    engine, noisy = run(ph)
-    _, clean = run(quiet)
+    engine, first = run(1)
+    _, second = run(2)
     rx = engine.receiver
     noise_bin = rx.sample_noise_variance(ph) * DEFAULT_TRANSIMPEDANCE_GAIN ** 2 * rx.fft_size
     for led_id in (1, 2, 3, 4):
-        diff = np.asarray(noisy[led_id]["equalized_symbols"]) - np.asarray(clean[led_id]["equalized_symbols"])
-        measured = np.mean(np.abs(diff) ** 2)
+        diff = np.asarray(first[led_id]["equalized_symbols"]) - np.asarray(second[led_id]["equalized_symbols"])
+        measured = np.mean(np.abs(diff) ** 2) / 2.0
         idx = sorted(i for i in rx.partitioner.comm_groups[led_id] if 0 < i < rx.fft_size // 2)
         freqs = np.array(idx) * rx.partitioner.grid.sample_rate / rx.fft_size
-        scale = rx.optical_scale(led_id, env.led_powers, 1.0)
-        h = ph.total_gains[led_id] * scale * np.abs(rx.led_response.complex_response(freqs)) * 0.54 * DEFAULT_TRANSIMPEDANCE_GAIN
+        h = np.abs(rx.optical_scale(led_id, env.led_powers, 1.0) * rx.channel_response(led_id, freqs, ph)
+                   * rx.led_response.complex_response(freqs)) * 0.54 * DEFAULT_TRANSIMPEDANCE_GAIN
         p = rx.power_mapper.power_matrix[led_id - 1, idx]
-        # equalized_symbols are MMSE outputs before the sqrt(p) normalisation
-        w = h / (h ** 2 + noise_bin / p)
+        w = h / (h ** 2 + noise_bin / p)  # MMSE weight; equalized_symbols are before the sqrt(p) scaling
         predicted = np.mean(w ** 2 * noise_bin)
         assert 10 * np.log10(measured / predicted) == pytest.approx(0.0, abs=1.0), led_id

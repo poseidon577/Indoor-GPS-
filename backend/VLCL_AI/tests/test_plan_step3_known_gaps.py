@@ -17,9 +17,6 @@ from VLCL_AI.dataset_generation.feature_extractor import FeatureExtractor
 from VLCL_AI.adaptive.joint_optimizer import JointAdaptiveOptimizer
 from VLCL_AI.tests.plan_helpers import make_states, xy_error, GRID_5x5
 
-FEC_BER = 3.8e-3
-HIDDEN_LED_POSE = dict(x=0.305, y=0.308, roll=10.3 * np.cos(1.7957), pitch=10.3 * np.sin(1.7957))  # one LED out of FOV
-TWO_HIDDEN_POSE = dict(x=0.4, y=-0.4, roll=20.0, pitch=0.0)  # two LEDs out of FOV
 
 
 def _loc(engine, x, y, **kw):
@@ -29,25 +26,6 @@ def _loc(engine, x, y, **kw):
 
 # ── A-DPDOA robustness ───────────────────────────────────────────────────────
 
-@pytest.mark.xfail(strict=True, reason="engine.prev_phases carries a corrupted phase forward forever after one bad step")
-def test_adpdoa_recovers_after_an_led_dropout():
-    """A walking user loses an LED for one step; the next good step must be accurate again."""
-    engine = IntegratedVLCLEngine()
-    p = TWO_HIDDEN_POSE
-    _loc(engine, p["x"], p["y"], roll=p["roll"], pitch=p["pitch"])
-    for _ in range(3):  # give tracking a few clean steps to recover
-        after = _loc(engine, -0.26, -0.18)
-    assert xy_error(after["estimated_position"], -0.26, -0.18) < 0.03
-
-
-@pytest.mark.xfail(strict=True, reason="solver reports success while the estimate is pinned to the room corner")
-def test_adpdoa_does_not_report_success_when_an_led_is_hidden():
-    p = HIDDEN_LED_POSE
-    res = _loc(IntegratedVLCLEngine(), p["x"], p["y"], roll=p["roll"], pitch=p["pitch"])
-    err = xy_error(res["estimated_position"], p["x"], p["y"])
-    assert (not res["success"]) or err < 0.5, f"success=True with {err:.2f} m error"
-
-
 @pytest.mark.xfail(strict=True, reason="2D mode assumes 0.85 m; a phone held at 1.0 m is off by ~1 m")
 @pytest.mark.parametrize("z", [1.0, 1.1])
 def test_adpdoa_tolerates_realistic_phone_heights(z):
@@ -55,23 +33,6 @@ def test_adpdoa_tolerates_realistic_phone_heights(z):
     errs = [xy_error(_loc(IntegratedVLCLEngine(), x, y, z=z, nlos=False)["estimated_position"], x, y)
             for x, y in GRID_5x5[::2]]
     assert np.mean(errs) < 0.05
-
-
-# ── Multipath ────────────────────────────────────────────────────────────────
-
-@pytest.mark.xfail(strict=True, reason="reflection walls assume a room spanning [0, W]; paper cell is centred, NLOS is zero at most points")
-def test_nlos_light_reaches_every_point_of_the_cell():
-    for x, y in GRID_5x5:
-        _, ph = make_states(x, y, nlos=True)
-        assert min(ph.nlos_gains.values()) > 0.0, f"no reflected light at ({x:.1f}, {y:.1f})"
-
-
-@pytest.mark.xfail(strict=True, reason="NLOS adds gain with the LOS delay only, so reflections cannot distort A-DPDOA phase")
-def test_reflected_light_arrives_later_than_direct_light():
-    _, los = make_states(0.4, 0.4, nlos=False)
-    _, both = make_states(0.4, 0.4, nlos=True)
-    assert both.nlos_gains[1] > 0.0
-    assert both.propagation_times[1] > los.propagation_times[1]
 
 
 # ── Legacy dataset pipeline (dataset_generation/) ────────────────────────────

@@ -203,7 +203,6 @@ class LocalizationEngine:
             wrapped_phases=corrected_phases,
             prev_phases=self.prev_phases
         )
-        self.prev_phases = np.copy(unwrapped_phases)
         
         # 9. Solve for distance differences from phases
         # Instantiate distance solver dynamically to support changes in active led config
@@ -287,6 +286,9 @@ class LocalizationEngine:
             p_est = np.array([room_bounds[0]/2.0, room_bounds[1]/2.0, self.config.fixed_height])
             status = "SOLVER_FAILED"
             confidence = 0.0
+
+        # Track phases only from a trusted fix, so one bad step cannot offset later ones
+        self.prev_phases = np.copy(unwrapped_phases) if status == "VALID" else None
             
         # 12. Accumulate metrics
         self.metrics.add_frame(

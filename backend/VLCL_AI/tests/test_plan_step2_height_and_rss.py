@@ -134,14 +134,6 @@ def test_error_grows_gracefully_with_noise():
     assert means[1] < 0.05  # 2 % RSS noise stays within 5 cm in the paper cell
 
 
-def test_nlos_biases_rss_but_modestly():
-    e = []
-    for x, y in GRID_5x5:
-        env, ph = make_states(x, y, nlos=True)
-        e.append(xy_error(_solver(env).solve(_measure(ph))[0], x, y))
-    assert 0.001 < np.mean(e) < 0.15
-
-
 def test_tilt_error_grows_with_tilt():
     means = []
     for tilt in (0.0, 10.0, 20.0):

@@ -409,8 +409,9 @@ class IntegratedVLCLEngine:
             prev_phases=self.prev_phases
         )
         
-        # Track estimated phases for unwrapping tracking
-        self.prev_phases = loc_results.get("unwrapped_phases")
+        # Track phases only from a trusted fix: a step whose tones were lost or whose
+        # solve failed would otherwise offset every later step by a whole turn
+        self.prev_phases = loc_results.get("unwrapped_phases") if loc_results.get("success") else None
         
         # Compile transmitter performance maps
         papr_per_led = {led_id: metrics["papr_db"] for led_id, metrics in clipping_metrics.items()}

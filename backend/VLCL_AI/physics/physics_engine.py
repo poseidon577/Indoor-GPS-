@@ -224,7 +224,13 @@ class PhysicsEngine:
                     # Walls where the room actually is: corner-origin or centred layout
                     bounds=infer_room_bounds(room_dims, env_state.led_positions),
                     refractive_index=self.config["refractive_index"],
-                    patch_m=self.config.get("nlos_patch_m", 0.1)
+                    patch_m=self.config.get("nlos_patch_m", 0.1),
+                    # The room's own surfaces, not the module defaults
+                    reflectivity={k: v for k, v in (
+                        ("wall", getattr(env_state, "wall_reflectivity", float("nan"))),
+                        ("floor", getattr(env_state, "floor_reflectivity", float("nan"))),
+                        ("ceiling", getattr(env_state, "ceiling_reflectivity", float("nan"))),
+                    ) if v is not None and np.isfinite(v)}
                 )
                 nlos_gain = paths["gain"]
                 nlos_delays[led_id] = paths["mean_delay_s"]

@@ -198,6 +198,10 @@ class IntegratedVLCLEngine:
         # Track previous phases across frames for unwrapping
         self.prev_phases = None
         self._last_fix_z = None
+        # What the receiver believes each LED emits (datasheet / last calibration). None
+        # means it knows the true powers; set it to model LED spread, ageing and drift.
+        if not hasattr(self, "receiver_led_powers"):
+            self.receiver_led_powers = None
         
         # Build receivers and transmitters
         self.transmitter = IntegratedVLCLTransmitter(
@@ -325,6 +329,9 @@ class IntegratedVLCLEngine:
         from VLCL_AI.localization.hybrid import HybridPositionSolver
         from VLCL_AI.localization.rss import calibrate_led_constants
         from VLCL_AI.environment.coordinate_system import infer_room_bounds
+        if self.receiver_led_powers is not None:
+            import dataclasses
+            env_state = dataclasses.replace(env_state, led_powers=dict(self.receiver_led_powers))
         constants, orders = calibrate_led_constants(env_state)
         return HybridPositionSolver(
             led_positions=env_state.led_positions,
@@ -535,7 +542,7 @@ class IntegratedVLCLEngine:
             true_position_only_for_eval=p_true,
             prev_phases=self.prev_phases,
             drive_gains={led_id: m.get("drive_gain", 1.0) for led_id, m in clipping_metrics.items()},
-            led_optical_powers=led_optical_powers,
+            led_optical_powers=self.receiver_led_powers or led_optical_powers,
             drive_reference=drive_reference,
             hybrid_solver=hybrid_solver,
             receiver_normal=imu_normal,

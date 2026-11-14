@@ -455,7 +455,8 @@ class IntegratedVLCLEngine:
                 physics_state=physics_state,
                 grid=self.grid,
                 frequency_plan=self.plan,
-                localization_reserve_w=localization_reserve_w
+                localization_reserve_w=localization_reserve_w,
+                tone_to_led_map=self.loc_config.tone_to_led_map
             )
             
         # The transmitter and receiver must use the subcarriers the allocation chose

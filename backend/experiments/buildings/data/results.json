@@ -1,0 +1,3514 @@
+{
+ "buildings": {
+  "0": {
+   "meta": {
+    "seed": 0,
+    "W": 32.0,
+    "L": 18.0,
+    "dark": [],
+    "stairwells": [
+     [
+      "hall",
+      26.05862432039354,
+      30.05862432039354
+     ],
+     [
+      "corridor_north_lit",
+      21.644642517845188,
+      24.644642517845188
+     ]
+    ]
+   },
+   "map": {
+    "points": 521,
+    "mean_fix_rate": 0.9788867562380038,
+    "share_no_fix": 0.0019193857965451055,
+    "median_p90_err_m": 0.035799737770027096
+   },
+   "routes": [
+    {
+     "start": [
+      27.625,
+      13.125
+     ],
+     "goal": [
+      18.125,
+      5.875
+     ],
+     "shortest": {
+      "route_m": 14.553300858899103,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.09857107689994798
+     },
+     "risk_weighted": {
+      "route_m": 14.553300858899103,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.10204539874133557
+     },
+     "drift_aware": {
+      "route_m": 14.553300858899103,
+      "hazard_rate": 0.01,
+      "reached": 1.0,
+      "median_max_error_m": 0.0982496619074961
+     }
+    },
+    {
+     "start": [
+      26.875,
+      14.875
+     ],
+     "goal": [
+      14.625,
+      8.375
+     ],
+     "shortest": {
+      "route_m": 18.442388155425114,
+      "hazard_rate": 0.01,
+      "reached": 1.0,
+      "median_max_error_m": 0.09916765144169887
+     },
+     "risk_weighted": {
+      "route_m": 18.442388155425114,
+      "hazard_rate": 0.03,
+      "reached": 1.0,
+      "median_max_error_m": 0.10132135757444531
+     },
+     "drift_aware": {
+      "route_m": 18.442388155425114,
+      "hazard_rate": 0.02,
+      "reached": 1.0,
+      "median_max_error_m": 0.09868163100910443
+     }
+    },
+    {
+     "start": [
+      8.625,
+      17.375
+     ],
+     "goal": [
+      5.875,
+      3.125
+     ],
+     "shortest": {
+      "route_m": 22.48528137423856,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.09035816681885922
+     },
+     "risk_weighted": {
+      "route_m": 22.48528137423856,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08858573821383411
+     },
+     "drift_aware": {
+      "route_m": 22.48528137423856,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.09074602589259173
+     }
+    },
+    {
+     "start": [
+      15.375,
+      7.875
+     ],
+     "goal": [
+      8.125,
+      15.875
+     ],
+     "shortest": {
+      "route_m": 28.113961030678922,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08070592477599893
+     },
+     "risk_weighted": {
+      "route_m": 28.528174593052015,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08186306441693036
+     },
+     "drift_aware": {
+      "route_m": 28.113961030678922,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.0774450638768722
+     }
+    },
+    {
+     "start": [
+      7.625,
+      14.625
+     ],
+     "goal": [
+      25.375,
+      3.625
+     ],
+     "shortest": {
+      "route_m": 25.08883476483183,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.13671022767961633
+     },
+     "risk_weighted": {
+      "route_m": 25.235281374238557,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.13221654113395687
+     },
+     "drift_aware": {
+      "route_m": 25.08883476483183,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.14845842968086784
+     }
+    }
+   ],
+   "secs": 76.0
+  },
+  "1": {
+   "meta": {
+    "seed": 1,
+    "W": 24.0,
+    "L": 21.0,
+    "dark": [
+     [
+      "corridor_south",
+      8.079917387670907,
+      15.390727762952674
+     ],
+     [
+      "corridor_north",
+      8.079917387670907,
+      15.390727762952674
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      2.753074192833161,
+      6.753074192833161
+     ],
+     [
+      "corridor_south_dark",
+      9.487239636022455,
+      12.487239636022455
+     ]
+    ]
+   },
+   "map": {
+    "points": 402,
+    "mean_fix_rate": 0.9369817578772802,
+    "share_no_fix": 0.04477611940298507,
+    "median_p90_err_m": 0.03220295138474297
+   },
+   "routes": [
+    {
+     "start": [
+      22.125,
+      20.125
+     ],
+     "goal": [
+      15.375,
+      2.875
+     ],
+     "shortest": {
+      "route_m": 22.949747468305823,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07618229797086037
+     },
+     "risk_weighted": {
+      "route_m": 22.949747468305823,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07618739270411579
+     },
+     "drift_aware": {
+      "route_m": 22.949747468305823,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07891183899343046
+     }
+    },
+    {
+     "start": [
+      19.875,
+      3.875
+     ],
+     "goal": [
+      0.375,
+      3.625
+     ],
+     "shortest": {
+      "route_m": 21.99264068711928,
+      "hazard_rate": 0.39,
+      "reached": 1.0,
+      "median_max_error_m": 0.3156602034786052
+     },
+     "risk_weighted": {
+      "route_m": 41.795941546018405,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.300794839597168
+     },
+     "drift_aware": {
+      "route_m": 21.99264068711928,
+      "hazard_rate": 0.03,
+      "reached": 1.0,
+      "median_max_error_m": 0.3069096102740504
+     }
+    },
+    {
+     "start": [
+      12.875,
+      16.375
+     ],
+     "goal": [
+      3.625,
+      1.875
+     ],
+     "shortest": {
+      "route_m": 18.624368670764568,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.19657745881609046
+     },
+     "risk_weighted": {
+      "route_m": 19.710155108391472,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.24532280238161047
+     },
+     "drift_aware": {
+      "route_m": 18.77081528017129,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.21654980432134902
+     }
+    },
+    {
+     "start": [
+      10.125,
+      18.375
+     ],
+     "goal": [
+      3.875,
+      5.375
+     ],
+     "shortest": {
+      "route_m": 17.78553390593273,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.14868903613095
+     },
+     "risk_weighted": {
+      "route_m": 21.028174593052015,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.0748583560751329
+     },
+     "drift_aware": {
+      "route_m": 17.78553390593273,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.14583793691371538
+     }
+    },
+    {
+     "start": [
+      16.375,
+      19.375
+     ],
+     "goal": [
+      2.625,
+      16.625
+     ],
+     "shortest": {
+      "route_m": 23.65685424949238,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.31572563442931034
+     },
+     "risk_weighted": {
+      "route_m": 23.863961030678926,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3234457210965266
+     },
+     "drift_aware": {
+      "route_m": 23.65685424949238,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.31368547306256345
+     }
+    }
+   ],
+   "secs": 61.9
+  },
+  "2": {
+   "meta": {
+    "seed": 2,
+    "W": 32.0,
+    "L": 16.0,
+    "dark": [
+     [
+      "corridor_south",
+      4.102932546661364,
+      9.202810018285517
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      26.654933885956154,
+      30.654933885956154
+     ],
+     [
+      "corridor_south_dark",
+      4.666126203423926,
+      7.666126203423926
+     ],
+     [
+      "corridor_north_lit",
+      13.146746985380346,
+      16.146746985380346
+     ]
+    ]
+   },
+   "map": {
+    "points": 492,
+    "mean_fix_rate": 0.9573170731707317,
+    "share_no_fix": 0.014227642276422764,
+    "median_p90_err_m": 0.04478066720951272
+   },
+   "routes": [
+    {
+     "start": [
+      25.375,
+      11.375
+     ],
+     "goal": [
+      11.625,
+      4.875
+     ],
+     "shortest": {
+      "route_m": 28.639087296526007,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1696190515997434
+     },
+     "risk_weighted": {
+      "route_m": 29.078427124746188,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1412223094430191
+     },
+     "drift_aware": {
+      "route_m": 28.639087296526007,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.16525761264307556
+     }
+    },
+    {
+     "start": [
+      29.125,
+      4.375
+     ],
+     "goal": [
+      24.625,
+      13.375
+     ],
+     "shortest": {
+      "route_m": 13.217514421272195,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.15568139609658
+     },
+     "risk_weighted": {
+      "route_m": 13.863961030678922,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.14604513924932505
+     },
+     "drift_aware": {
+      "route_m": 13.424621202458743,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.14639006691314008
+     }
+    },
+    {
+     "start": [
+      25.125,
+      9.375
+     ],
+     "goal": [
+      10.875,
+      6.125
+     ],
+     "shortest": {
+      "route_m": 19.535533905932734,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07775929783339139
+     },
+     "risk_weighted": {
+      "route_m": 19.535533905932734,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07789198359696822
+     },
+     "drift_aware": {
+      "route_m": 19.535533905932734,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07689467973889105
+     }
+    },
+    {
+     "start": [
+      1.625,
+      10.375
+     ],
+     "goal": [
+      18.125,
+      6.625
+     ],
+     "shortest": {
+      "route_m": 22.224873734152915,
+      "hazard_rate": 0.17,
+      "reached": 1.0,
+      "median_max_error_m": 0.1497519141256362
+     },
+     "risk_weighted": {
+      "route_m": 22.43198051533946,
+      "hazard_rate": 0.145,
+      "reached": 1.0,
+      "median_max_error_m": 0.15588269043772734
+     },
+     "drift_aware": {
+      "route_m": 22.01776695296637,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.13743511476380355
+     }
+    },
+    {
+     "start": [
+      27.375,
+      3.625
+     ],
+     "goal": [
+      3.625,
+      13.625
+     ],
+     "shortest": {
+      "route_m": 35.32106781186549,
+      "hazard_rate": 0.18,
+      "reached": 1.0,
+      "median_max_error_m": 0.36518458963242445
+     },
+     "risk_weighted": {
+      "route_m": 38.881727983645305,
+      "hazard_rate": 0.015,
+      "reached": 1.0,
+      "median_max_error_m": 0.18275582320352216
+     },
+     "drift_aware": {
+      "route_m": 35.32106781186549,
+      "hazard_rate": 0.01,
+      "reached": 1.0,
+      "median_max_error_m": 0.34001261644058844
+     }
+    }
+   ],
+   "secs": 82.3
+  },
+  "3": {
+   "meta": {
+    "seed": 3,
+    "W": 32.0,
+    "L": 16.0,
+    "dark": [
+     [
+      "corridor_south",
+      11.662538804729476,
+      17.57874399729281
+     ],
+     [
+      "corridor_north",
+      11.662538804729476,
+      17.57874399729281
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      1.2535099594366108,
+      5.253509959436611
+     ],
+     [
+      "corridor_south_dark",
+      13.106934744883434,
+      16.106934744883432
+     ],
+     [
+      "corridor_north_lit",
+      26.130785520934385,
+      29.130785520934385
+     ]
+    ]
+   },
+   "map": {
+    "points": 448,
+    "mean_fix_rate": 0.8980654761904763,
+    "share_no_fix": 0.044642857142857144,
+    "median_p90_err_m": 0.04290529740333371
+   },
+   "routes": [
+    {
+     "start": [
+      18.375,
+      1.625
+     ],
+     "goal": [
+      6.625,
+      14.375
+     ],
+     "shortest": {
+      "route_m": 23.520815280171295,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.20266072255887826
+     },
+     "risk_weighted": {
+      "route_m": 23.5208152801713,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.21192508622425654
+     },
+     "drift_aware": {
+      "route_m": 23.520815280171295,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2062827676838624
+     }
+    },
+    {
+     "start": [
+      7.375,
+      15.375
+     ],
+     "goal": [
+      15.375,
+      3.375
+     ],
+     "shortest": null,
+     "risk_weighted": null,
+     "drift_aware": null
+    },
+    {
+     "start": [
+      15.125,
+      2.375
+     ],
+     "goal": [
+      31.125,
+      0.625
+     ],
+     "shortest": null,
+     "risk_weighted": null,
+     "drift_aware": null
+    },
+    {
+     "start": [
+      6.625,
+      3.625
+     ],
+     "goal": [
+      21.875,
+      11.625
+     ],
+     "shortest": {
+      "route_m": 20.02817459305201,
+      "hazard_rate": 0.055,
+      "reached": 1.0,
+      "median_max_error_m": 0.15792916542543223
+     },
+     "risk_weighted": {
+      "route_m": 31.17462120245874,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.14623598465866694
+     },
+     "drift_aware": {
+      "route_m": 20.02817459305201,
+      "hazard_rate": 0.065,
+      "reached": 1.0,
+      "median_max_error_m": 0.16255444007300554
+     }
+    },
+    {
+     "start": [
+      29.375,
+      0.625
+     ],
+     "goal": [
+      5.625,
+      1.875
+     ],
+     "shortest": {
+      "route_m": 29.717514421272192,
+      "hazard_rate": 0.255,
+      "reached": 1.0,
+      "median_max_error_m": 0.23173571097293802
+     },
+     "risk_weighted": {
+      "route_m": 46.70279579551082,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.33542041285972146
+     },
+     "drift_aware": {
+      "route_m": 30.131727983645284,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.2299817285977294
+     }
+    }
+   ],
+   "secs": 75.9
+  },
+  "4": {
+   "meta": {
+    "seed": 4,
+    "W": 28.0,
+    "L": 21.0,
+    "dark": [
+     [
+      "corridor_south",
+      9.023785350036361,
+      16.23139017797959
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      22.053450911932114,
+      26.053450911932114
+     ],
+     [
+      "corridor_south_dark",
+      9.806597856578614,
+      12.806597856578614
+     ]
+    ]
+   },
+   "map": {
+    "points": 546,
+    "mean_fix_rate": 0.9566544566544567,
+    "share_no_fix": 0.018315018315018316,
+    "median_p90_err_m": 0.05153315080733692
+   },
+   "routes": [
+    {
+     "start": [
+      20.625,
+      11.125
+     ],
+     "goal": [
+      0.125,
+      7.625
+     ],
+     "shortest": {
+      "route_m": 23.974873734152915,
+      "hazard_rate": 0.57,
+      "reached": 1.0,
+      "median_max_error_m": 1.0838951449039276
+     },
+     "risk_weighted": {
+      "route_m": 30.217514421272192,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.13599699882643723
+     },
+     "drift_aware": {
+      "route_m": 24.389087296526007,
+      "hazard_rate": 0.11,
+      "reached": 1.0,
+      "median_max_error_m": 0.28127678499676134
+     }
+    },
+    {
+     "start": [
+      21.375,
+      0.625
+     ],
+     "goal": [
+      10.625,
+      13.375
+     ],
+     "shortest": {
+      "route_m": 21.44974746830583,
+      "hazard_rate": 0.54,
+      "reached": 1.0,
+      "median_max_error_m": 0.8661453777878794
+     },
+     "risk_weighted": {
+      "route_m": 54.69238815542515,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.16339894089415977
+     },
+     "drift_aware": {
+      "route_m": 21.656854249492376,
+      "hazard_rate": 0.08,
+      "reached": 1.0,
+      "median_max_error_m": 0.27662713671003314
+     }
+    },
+    {
+     "start": [
+      26.375,
+      0.625
+     ],
+     "goal": [
+      23.375,
+      16.875
+     ],
+     "shortest": {
+      "route_m": 20.3817279836453,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.11619100111387762
+     },
+     "risk_weighted": {
+      "route_m": 20.58883476483184,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.12077598082123886
+     },
+     "drift_aware": {
+      "route_m": 20.3817279836453,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.11762699267694304
+     }
+    },
+    {
+     "start": [
+      12.375,
+      13.125
+     ],
+     "goal": [
+      3.375,
+      19.875
+     ],
+     "shortest": {
+      "route_m": 28.23528137423856,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.13281134265497263
+     },
+     "risk_weighted": {
+      "route_m": 28.67462120245874,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.13415796171424765
+     },
+     "drift_aware": {
+      "route_m": 28.381727983645288,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.14841517961965411
+     }
+    },
+    {
+     "start": [
+      11.625,
+      12.125
+     ],
+     "goal": [
+      23.125,
+      2.875
+     ],
+     "shortest": {
+      "route_m": 18.674621202458738,
+      "hazard_rate": 0.035,
+      "reached": 1.0,
+      "median_max_error_m": 0.9431607500154163
+     },
+     "risk_weighted": {
+      "route_m": 52.33147545195117,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1552761757816859
+     },
+     "drift_aware": {
+      "route_m": 18.67462120245874,
+      "hazard_rate": 0.025,
+      "reached": 1.0,
+      "median_max_error_m": 0.26088772709096186
+     }
+    }
+   ],
+   "secs": 79.0
+  },
+  "5": {
+   "meta": {
+    "seed": 5,
+    "W": 28.0,
+    "L": 20.0,
+    "dark": [
+     [
+      "corridor_south",
+      9.133902092568292,
+      14.767794914248286
+     ],
+     [
+      "corridor_south",
+      3.7244031024391226,
+      7.919433945347794
+     ],
+     [
+      "corridor_north",
+      3.7244031024391226,
+      7.919433945347794
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      2.8820019504852037,
+      6.882001950485204
+     ],
+     [
+      "corridor_north_lit",
+      17.197201347666724,
+      20.197201347666724
+     ]
+    ]
+   },
+   "map": {
+    "points": 496,
+    "mean_fix_rate": 0.9139784946236559,
+    "share_no_fix": 0.04233870967741935,
+    "median_p90_err_m": 0.03837182114086438
+   },
+   "routes": [
+    {
+     "start": [
+      11.625,
+      7.125
+     ],
+     "goal": [
+      1.625,
+      16.125
+     ],
+     "shortest": {
+      "route_m": 21.21751442127219,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2825554230466346
+     },
+     "risk_weighted": {
+      "route_m": 22.631727983645288,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3287344406216326
+     },
+     "drift_aware": {
+      "route_m": 21.424621202458734,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2913051990856043
+     }
+    },
+    {
+     "start": [
+      13.625,
+      13.875
+     ],
+     "goal": [
+      6.875,
+      2.875
+     ],
+     "shortest": {
+      "route_m": 17.26040764008565,
+      "hazard_rate": 0.0,
+      "reached": 0.96,
+      "median_max_error_m": 0.3698143154405237
+     },
+     "risk_weighted": {
+      "route_m": 25.235281374238557,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.23874878909898944
+     },
+     "drift_aware": {
+      "route_m": 17.406854249492376,
+      "hazard_rate": 0.0,
+      "reached": 0.93,
+      "median_max_error_m": 0.33631032206413414
+     }
+    },
+    {
+     "start": [
+      23.625,
+      1.875
+     ],
+     "goal": [
+      22.875,
+      16.875
+     ],
+     "shortest": {
+      "route_m": 17.795941546018383,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07773704665802367
+     },
+     "risk_weighted": {
+      "route_m": 17.73528137423856,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07516570262717522
+     },
+     "drift_aware": {
+      "route_m": 17.795941546018383,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08042001724617634
+     }
+    },
+    {
+     "start": [
+      2.625,
+      0.125
+     ],
+     "goal": [
+      27.125,
+      7.875
+     ],
+     "shortest": {
+      "route_m": 28.149494936611664,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.32286949173397184
+     },
+     "risk_weighted": {
+      "route_m": 29.21015510839148,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3123782116634156
+     },
+     "drift_aware": {
+      "route_m": 28.149494936611664,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.34725566757015647
+     }
+    },
+    {
+     "start": [
+      17.625,
+      9.125
+     ],
+     "goal": [
+      8.125,
+      16.125
+     ],
+     "shortest": {
+      "route_m": 20.98528137423856,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.0773078637035475
+     },
+     "risk_weighted": {
+      "route_m": 22.48528137423856,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.09200967165506839
+     },
+     "drift_aware": {
+      "route_m": 20.98528137423856,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07433783386912246
+     }
+    }
+   ],
+   "secs": 73.7
+  },
+  "6": {
+   "meta": {
+    "seed": 6,
+    "W": 24.0,
+    "L": 19.0,
+    "dark": [
+     [
+      "corridor_south",
+      10.593075271285752,
+      17.290370993303725
+     ],
+     [
+      "corridor_south",
+      6.9595614646255,
+      13.679232109281589
+     ],
+     [
+      "corridor_north",
+      10.593075271285752,
+      17.290370993303725
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      18.308000158511636,
+      22.308000158511636
+     ],
+     [
+      "corridor_south_dark",
+      11.661742473992115,
+      14.661742473992115
+     ],
+     [
+      "corridor_north_lit",
+      18.788152645917933,
+      21.788152645917933
+     ]
+    ]
+   },
+   "map": {
+    "points": 416,
+    "mean_fix_rate": 0.8934294871794871,
+    "share_no_fix": 0.07692307692307693,
+    "median_p90_err_m": 0.05437490384601282
+   },
+   "routes": [
+    {
+     "start": [
+      4.625,
+      7.625
+     ],
+     "goal": [
+      13.875,
+      12.625
+     ],
+     "shortest": {
+      "route_m": 22.639087296526007,
+      "hazard_rate": 0.0,
+      "reached": 0.99,
+      "median_max_error_m": 0.18666609550395163
+     },
+     "risk_weighted": {
+      "route_m": 22.846194077712553,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.155935266116143
+     },
+     "drift_aware": {
+      "route_m": 22.639087296526007,
+      "hazard_rate": 0.0,
+      "reached": 0.995,
+      "median_max_error_m": 0.18151699475964417
+     }
+    },
+    {
+     "start": [
+      16.125,
+      5.875
+     ],
+     "goal": [
+      6.875,
+      17.625
+     ],
+     "shortest": {
+      "route_m": 29.753048327204922,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.3717783345334918
+     },
+     "risk_weighted": {
+      "route_m": 29.960155108391472,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3743705757960233
+     },
+     "drift_aware": {
+      "route_m": 29.753048327204926,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.37014960623990667
+     }
+    },
+    {
+     "start": [
+      10.875,
+      3.875
+     ],
+     "goal": [
+      9.375,
+      17.375
+     ],
+     "shortest": {
+      "route_m": 32.278174593052015,
+      "hazard_rate": 0.01,
+      "reached": 1.0,
+      "median_max_error_m": 0.34674787127134366
+     },
+     "risk_weighted": {
+      "route_m": 32.485281374238554,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.5096375592797096
+     },
+     "drift_aware": {
+      "route_m": 32.278174593052015,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3456999144945393
+     }
+    },
+    {
+     "start": [
+      1.125,
+      11.625
+     ],
+     "goal": [
+      8.375,
+      1.625
+     ],
+     "shortest": {
+      "route_m": 14.467514421272194,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.12101597403852775
+     },
+     "risk_weighted": {
+      "route_m": 14.467514421272195,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.13277301217418488
+     },
+     "drift_aware": {
+      "route_m": 14.467514421272194,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.11881421674767728
+     }
+    },
+    {
+     "start": [
+      23.625,
+      8.125
+     ],
+     "goal": [
+      11.375,
+      3.125
+     ],
+     "shortest": {
+      "route_m": 14.321067811865468,
+      "hazard_rate": 0.1,
+      "reached": 1.0,
+      "median_max_error_m": 0.22482119388806532
+     },
+     "risk_weighted": {
+      "route_m": 14.321067811865472,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1990666911962734
+     },
+     "drift_aware": {
+      "route_m": 14.321067811865468,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.18604350811089854
+     }
+    }
+   ],
+   "secs": 59.3
+  },
+  "7": {
+   "meta": {
+    "seed": 7,
+    "W": 32.0,
+    "L": 21.0,
+    "dark": [],
+    "stairwells": [
+     [
+      "hall",
+      2.1394382957185547,
+      6.139438295718555
+     ],
+     [
+      "corridor_north_lit",
+      5.636498844023173,
+      8.636498844023173
+     ]
+    ]
+   },
+   "map": {
+    "points": 601,
+    "mean_fix_rate": 0.961730449251248,
+    "share_no_fix": 0.0066555740432612314,
+    "median_p90_err_m": 0.03643082542437294
+   },
+   "routes": [
+    {
+     "start": [
+      14.125,
+      5.625
+     ],
+     "goal": [
+      18.875,
+      18.875
+     ],
+     "shortest": {
+      "route_m": 20.57106781186547,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.10750833785898287
+     },
+     "risk_weighted": {
+      "route_m": 21.010407640085646,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.0979778885541947
+     },
+     "drift_aware": {
+      "route_m": 20.57106781186547,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.10673387561181036
+     }
+    },
+    {
+     "start": [
+      2.375,
+      13.375
+     ],
+     "goal": [
+      27.875,
+      19.875
+     ],
+     "shortest": {
+      "route_m": 31.474873734152915,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.1088058620360825
+     },
+     "risk_weighted": {
+      "route_m": 31.68198051533946,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.10436249014902411
+     },
+     "drift_aware": {
+      "route_m": 31.474873734152915,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.10743456577597524
+     }
+    },
+    {
+     "start": [
+      26.875,
+      11.125
+     ],
+     "goal": [
+      15.125,
+      3.125
+     ],
+     "shortest": {
+      "route_m": 17.846194077712553,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08595009477814913
+     },
+     "risk_weighted": {
+      "route_m": 18.346194077712553,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.09430050252010744
+     },
+     "drift_aware": {
+      "route_m": 17.846194077712553,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08944208870736632
+     }
+    },
+    {
+     "start": [
+      21.875,
+      11.125
+     ],
+     "goal": [
+      5.625,
+      3.125
+     ],
+     "shortest": {
+      "route_m": 23.82106781186547,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.24778832817693763
+     },
+     "risk_weighted": {
+      "route_m": 25.113961030678922,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2564953023161542
+     },
+     "drift_aware": {
+      "route_m": 23.82106781186547,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2684291886924034
+     }
+    },
+    {
+     "start": [
+      7.625,
+      18.875
+     ],
+     "goal": [
+      11.625,
+      7.875
+     ],
+     "shortest": {
+      "route_m": 17.096194077712557,
+      "hazard_rate": 0.05,
+      "reached": 1.0,
+      "median_max_error_m": 0.09305370741084905
+     },
+     "risk_weighted": {
+      "route_m": 17.096194077712557,
+      "hazard_rate": 0.05,
+      "reached": 1.0,
+      "median_max_error_m": 0.09148825709863889
+     },
+     "drift_aware": {
+      "route_m": 17.096194077712557,
+      "hazard_rate": 0.055,
+      "reached": 1.0,
+      "median_max_error_m": 0.08999686640718174
+     }
+    }
+   ],
+   "secs": 89.6
+  },
+  "8": {
+   "meta": {
+    "seed": 8,
+    "W": 28.0,
+    "L": 18.0,
+    "dark": [
+     [
+      "corridor_south",
+      9.257356904627104,
+      15.0088843971183
+     ],
+     [
+      "corridor_south",
+      8.963982449429649,
+      13.391796835320747
+     ],
+     [
+      "corridor_north",
+      9.257356904627104,
+      15.0088843971183
+     ],
+     [
+      "corridor_north",
+      8.963982449429649,
+      13.391796835320747
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      21.301728588467526,
+      25.301728588467526
+     ],
+     [
+      "corridor_south_dark",
+      10.354074858130025,
+      13.354074858130025
+     ]
+    ]
+   },
+   "map": {
+    "points": 464,
+    "mean_fix_rate": 0.9547413793103449,
+    "share_no_fix": 0.023706896551724137,
+    "median_p90_err_m": 0.034514596508244816
+   },
+   "routes": [
+    {
+     "start": [
+      13.625,
+      11.375
+     ],
+     "goal": [
+      23.125,
+      16.875
+     ],
+     "shortest": {
+      "route_m": 12.949747468305826,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.06313419352742036
+     },
+     "risk_weighted": {
+      "route_m": 13.36396103067892,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1259826938713518
+     },
+     "drift_aware": {
+      "route_m": 12.949747468305826,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.06405073629395398
+     }
+    },
+    {
+     "start": [
+      15.875,
+      10.875
+     ],
+     "goal": [
+      6.125,
+      1.375
+     ],
+     "shortest": {
+      "route_m": 16.467514421272195,
+      "hazard_rate": 0.04,
+      "reached": 1.0,
+      "median_max_error_m": 0.5427192465793724
+     },
+     "risk_weighted": {
+      "route_m": 17.11396103067892,
+      "hazard_rate": 0.01,
+      "reached": 1.0,
+      "median_max_error_m": 0.3697599145831697
+     },
+     "drift_aware": {
+      "route_m": 16.760407640085646,
+      "hazard_rate": 0.03,
+      "reached": 0.995,
+      "median_max_error_m": 0.43841505829042815
+     }
+    },
+    {
+     "start": [
+      2.375,
+      3.125
+     ],
+     "goal": [
+      27.625,
+      2.375
+     ],
+     "shortest": {
+      "route_m": 27.010407640085646,
+      "hazard_rate": 0.25,
+      "reached": 1.0,
+      "median_max_error_m": 0.2471411426686133
+     },
+     "risk_weighted": {
+      "route_m": 37.75304832720494,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.43103344701661434
+     },
+     "drift_aware": {
+      "route_m": 26.8033008588991,
+      "hazard_rate": 0.045,
+      "reached": 1.0,
+      "median_max_error_m": 0.23042695719719464
+     }
+    },
+    {
+     "start": [
+      6.875,
+      7.875
+     ],
+     "goal": [
+      27.625,
+      1.625
+     ],
+     "shortest": {
+      "route_m": 27.631727983645288,
+      "hazard_rate": 0.235,
+      "reached": 1.0,
+      "median_max_error_m": 0.19761734677423076
+     },
+     "risk_weighted": {
+      "route_m": 38.19238815542512,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.4902626045948085
+     },
+     "drift_aware": {
+      "route_m": 27.631727983645288,
+      "hazard_rate": 0.065,
+      "reached": 1.0,
+      "median_max_error_m": 0.1879080955156912
+     }
+    },
+    {
+     "start": [
+      5.875,
+      1.125
+     ],
+     "goal": [
+      23.875,
+      14.875
+     ],
+     "shortest": {
+      "route_m": 26.47792206135784,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.7126770969147089
+     },
+     "risk_weighted": {
+      "route_m": 27.124368670764568,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.49464973903095366
+     },
+     "drift_aware": {
+      "route_m": 26.77081528017129,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.44682555557068704
+     }
+    }
+   ],
+   "secs": 67.9
+  },
+  "9": {
+   "meta": {
+    "seed": 9,
+    "W": 24.0,
+    "L": 20.0,
+    "dark": [
+     [
+      "corridor_south",
+      13.98456144588609,
+      21.426136042617628
+     ],
+     [
+      "corridor_south",
+      14.018851548585149,
+      18.125202486455535
+     ],
+     [
+      "corridor_north",
+      13.98456144588609,
+      21.426136042617628
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      18.185052471356407,
+      22.185052471356407
+     ],
+     [
+      "corridor_south_dark",
+      15.595865825550204,
+      18.595865825550206
+     ],
+     [
+      "corridor_north_lit",
+      2.2493308969725194,
+      5.24933089697252
+     ]
+    ]
+   },
+   "map": {
+    "points": 438,
+    "mean_fix_rate": 0.9444444444444443,
+    "share_no_fix": 0.0365296803652968,
+    "median_p90_err_m": 0.03352738832491165
+   },
+   "routes": [
+    {
+     "start": [
+      17.875,
+      14.875
+     ],
+     "goal": [
+      1.125,
+      19.125
+     ],
+     "shortest": null,
+     "risk_weighted": null,
+     "drift_aware": null
+    },
+    {
+     "start": [
+      16.125,
+      12.875
+     ],
+     "goal": [
+      6.625,
+      19.125
+     ],
+     "shortest": {
+      "route_m": 34.7101551083915,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3072835816738555
+     },
+     "risk_weighted": {
+      "route_m": 38.685028842544426,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2734466488410809
+     },
+     "drift_aware": {
+      "route_m": 34.91726188957804,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2841540834395386
+     }
+    },
+    {
+     "start": [
+      19.875,
+      1.125
+     ],
+     "goal": [
+      13.125,
+      17.875
+     ],
+     "shortest": {
+      "route_m": 25.924621202458745,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3110923097686906
+     },
+     "risk_weighted": {
+      "route_m": 27.7175144212722,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3553502533606983
+     },
+     "drift_aware": {
+      "route_m": 26.424621202458745,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3082037704400632
+     }
+    },
+    {
+     "start": [
+      22.875,
+      11.125
+     ],
+     "goal": [
+      3.625,
+      13.125
+     ],
+     "shortest": {
+      "route_m": 27.19974746830583,
+      "hazard_rate": 0.205,
+      "reached": 1.0,
+      "median_max_error_m": 0.15910853674315287
+     },
+     "risk_weighted": {
+      "route_m": 41.05330085889913,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.295481081964974
+     },
+     "drift_aware": {
+      "route_m": 27.613961030678922,
+      "hazard_rate": 0.05,
+      "reached": 1.0,
+      "median_max_error_m": 0.13161906864247058
+     }
+    },
+    {
+     "start": [
+      17.875,
+      18.125
+     ],
+     "goal": [
+      22.875,
+      2.125
+     ],
+     "shortest": {
+      "route_m": 18.949747468305834,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.16310979779381599
+     },
+     "risk_weighted": {
+      "route_m": 20.181980515339465,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.27807435155921373
+     },
+     "drift_aware": {
+      "route_m": 18.949747468305834,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1589445252812548
+     }
+    }
+   ],
+   "secs": 67.2
+  },
+  "10": {
+   "meta": {
+    "seed": 10,
+    "W": 32.0,
+    "L": 18.0,
+    "dark": [
+     [
+      "corridor_south",
+      5.7183920804101325,
+      12.474537999534657
+     ],
+     [
+      "corridor_south",
+      19.83495448624558,
+      25.536990475865487
+     ],
+     [
+      "corridor_north",
+      19.83495448624558,
+      25.536990475865487
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      26.58324120013013,
+      30.58324120013013
+     ],
+     [
+      "corridor_south_dark",
+      7.943526511470678,
+      10.943526511470678
+     ]
+    ]
+   },
+   "map": {
+    "points": 540,
+    "mean_fix_rate": 0.9395061728395062,
+    "share_no_fix": 0.046296296296296294,
+    "median_p90_err_m": 0.04995771573104867
+   },
+   "routes": [
+    {
+     "start": [
+      23.125,
+      11.375
+     ],
+     "goal": [
+      2.875,
+      4.875
+     ],
+     "shortest": {
+      "route_m": 28.174621202458745,
+      "hazard_rate": 0.185,
+      "reached": 1.0,
+      "median_max_error_m": 0.31312396998788805
+     },
+     "risk_weighted": {
+      "route_m": 54.01345596729063,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.29289002772722217
+     },
+     "drift_aware": {
+      "route_m": 28.174621202458745,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.3080304209134416
+     }
+    },
+    {
+     "start": [
+      0.875,
+      3.625
+     ],
+     "goal": [
+      29.875,
+      15.625
+     ],
+     "shortest": {
+      "route_m": 39.692388155425135,
+      "hazard_rate": 0.315,
+      "reached": 1.0,
+      "median_max_error_m": 0.33627765776208435
+     },
+     "risk_weighted": {
+      "route_m": 42.642135623730994,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2595805303232839
+     },
+     "drift_aware": {
+      "route_m": 39.89949493661169,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3236878225004388
+     }
+    },
+    {
+     "start": [
+      3.625,
+      7.625
+     ],
+     "goal": [
+      31.375,
+      17.125
+     ],
+     "shortest": {
+      "route_m": 38.02817459305206,
+      "hazard_rate": 0.355,
+      "reached": 1.0,
+      "median_max_error_m": 0.32240714110631813
+     },
+     "risk_weighted": {
+      "route_m": 39.063708498984795,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2659710595934854
+     },
+     "drift_aware": {
+      "route_m": 38.028174593052064,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2845438570220022
+     }
+    },
+    {
+     "start": [
+      27.375,
+      2.625
+     ],
+     "goal": [
+      27.625,
+      15.125
+     ],
+     "shortest": {
+      "route_m": 15.088834764831837,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.21687737956896025
+     },
+     "risk_weighted": {
+      "route_m": 15.088834764831837,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.21568925852695936
+     },
+     "drift_aware": {
+      "route_m": 15.088834764831837,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2170038428120535
+     }
+    },
+    {
+     "start": [
+      14.125,
+      10.875
+     ],
+     "goal": [
+      24.875,
+      9.625
+     ],
+     "shortest": {
+      "route_m": 18.596194077712557,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.25495085222327674
+     },
+     "risk_weighted": {
+      "route_m": 18.38908729652601,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.250256660807004
+     },
+     "drift_aware": {
+      "route_m": 18.596194077712557,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.25253140321427037
+     }
+    }
+   ],
+   "secs": 77.0
+  },
+  "11": {
+   "meta": {
+    "seed": 11,
+    "W": 20.0,
+    "L": 19.0,
+    "dark": [
+     [
+      "corridor_south",
+      4.038191595194384,
+      11.831505408361483
+     ],
+     [
+      "corridor_north",
+      4.038191595194384,
+      11.831505408361483
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      1.0681005578940752,
+      5.068100557894075
+     ]
+    ]
+   },
+   "map": {
+    "points": 311,
+    "mean_fix_rate": 0.8745980707395499,
+    "share_no_fix": 0.07717041800643087,
+    "median_p90_err_m": 0.04386313107020596
+   },
+   "routes": [
+    {
+     "start": [
+      11.125,
+      6.625
+     ],
+     "goal": [
+      1.125,
+      12.375
+     ],
+     "shortest": {
+      "route_m": 16.785533905932734,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.4120235691429023
+     },
+     "risk_weighted": {
+      "route_m": 17.639087296526007,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.41902302452094004
+     },
+     "drift_aware": {
+      "route_m": 16.99264068711928,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.376471422430781
+     }
+    },
+    {
+     "start": [
+      4.625,
+      2.875
+     ],
+     "goal": [
+      1.375,
+      15.125
+     ],
+     "shortest": {
+      "route_m": 15.631727983645291,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.17259572934590264
+     },
+     "risk_weighted": {
+      "route_m": 15.631727983645291,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1798353949466154
+     },
+     "drift_aware": {
+      "route_m": 15.631727983645291,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.18961751280322064
+     }
+    },
+    {
+     "start": [
+      5.375,
+      16.375
+     ],
+     "goal": [
+      19.625,
+      7.375
+     ],
+     "shortest": {
+      "route_m": 23.467514421272195,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3190551880582673
+     },
+     "risk_weighted": {
+      "route_m": 31.7708152801713,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.4083944610607355
+     },
+     "drift_aware": {
+      "route_m": 23.88172798364529,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.26087894244304705
+     }
+    },
+    {
+     "start": [
+      6.875,
+      16.375
+     ],
+     "goal": [
+      19.625,
+      11.375
+     ],
+     "shortest": {
+      "route_m": 15.846194077712555,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.18280550558011796
+     },
+     "risk_weighted": {
+      "route_m": 15.846194077712555,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1582120890237503
+     },
+     "drift_aware": {
+      "route_m": 15.846194077712555,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1982945247260014
+     }
+    },
+    {
+     "start": [
+      4.625,
+      17.875
+     ],
+     "goal": [
+      0.625,
+      0.625
+     ],
+     "shortest": {
+      "route_m": 18.906854249492383,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.37447753661552363
+     },
+     "risk_weighted": {
+      "route_m": 19.260407640085653,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.31088300516998935
+     },
+     "drift_aware": {
+      "route_m": 18.90685424949238,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.15037390340368784
+     }
+    }
+   ],
+   "secs": 43.0
+  },
+  "12": {
+   "meta": {
+    "seed": 12,
+    "W": 28.0,
+    "L": 20.0,
+    "dark": [
+     [
+      "corridor_south",
+      4.84127011397516,
+      12.426507608793882
+     ],
+     [
+      "corridor_north",
+      6.688659945438495,
+      13.370442916529633
+     ],
+     [
+      "corridor_north",
+      4.84127011397516,
+      12.426507608793882
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      1.8089456744079266,
+      5.808945674407926
+     ],
+     [
+      "corridor_south_dark",
+      8.492906643140055,
+      11.492906643140055
+     ]
+    ]
+   },
+   "map": {
+    "points": 460,
+    "mean_fix_rate": 0.9137681159420289,
+    "share_no_fix": 0.05,
+    "median_p90_err_m": 0.03414085462152616
+   },
+   "routes": [
+    {
+     "start": [
+      20.125,
+      14.875
+     ],
+     "goal": [
+      6.875,
+      9.125
+     ],
+     "shortest": {
+      "route_m": 24.217514421272195,
+      "hazard_rate": 0.04,
+      "reached": 1.0,
+      "median_max_error_m": 0.2373768289326455
+     },
+     "risk_weighted": {
+      "route_m": 36.631727983645305,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.387879054688275
+     },
+     "drift_aware": {
+      "route_m": 24.217514421272195,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2589514373646437
+     }
+    },
+    {
+     "start": [
+      3.125,
+      1.875
+     ],
+     "goal": [
+      21.125,
+      15.375
+     ],
+     "shortest": {
+      "route_m": 26.520815280171295,
+      "hazard_rate": 0.39,
+      "reached": 1.0,
+      "median_max_error_m": 0.29853591861236106
+     },
+     "risk_weighted": {
+      "route_m": 33.1317279836453,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3255592655090051
+     },
+     "drift_aware": {
+      "route_m": 26.874368670764568,
+      "hazard_rate": 0.01,
+      "reached": 1.0,
+      "median_max_error_m": 0.25780841447606295
+     }
+    },
+    {
+     "start": [
+      13.625,
+      5.875
+     ],
+     "goal": [
+      24.375,
+      0.625
+     ],
+     "shortest": {
+      "route_m": 14.828427124746188,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.059791027813380936
+     },
+     "risk_weighted": {
+      "route_m": 14.828427124746188,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.06080451568454355
+     },
+     "drift_aware": {
+      "route_m": 14.828427124746188,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.05829446234290543
+     }
+    },
+    {
+     "start": [
+      25.125,
+      14.875
+     ],
+     "goal": [
+      2.875,
+      17.375
+     ],
+     "shortest": {
+      "route_m": 26.785533905932734,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.28067324049994724
+     },
+     "risk_weighted": {
+      "route_m": 26.99264068711928,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3275160398946264
+     },
+     "drift_aware": {
+      "route_m": 26.99264068711928,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3344569593840447
+     }
+    },
+    {
+     "start": [
+      8.125,
+      13.625
+     ],
+     "goal": [
+      19.375,
+      5.125
+     ],
+     "shortest": {
+      "route_m": 17.406854249492376,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.22062851986809753
+     },
+     "risk_weighted": {
+      "route_m": 17.406854249492376,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.20912164296203084
+     },
+     "drift_aware": {
+      "route_m": 17.406854249492376,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.16598138002326382
+     }
+    }
+   ],
+   "secs": 63.1
+  },
+  "13": {
+   "meta": {
+    "seed": 13,
+    "W": 32.0,
+    "L": 22.0,
+    "dark": [
+     [
+      "corridor_south",
+      21.929315608921268,
+      28.384482373109677
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      2.105961658354482,
+      6.105961658354482
+     ],
+     [
+      "corridor_south_dark",
+      23.408826110362995,
+      26.408826110362995
+     ]
+    ]
+   },
+   "map": {
+    "points": 644,
+    "mean_fix_rate": 0.9259834368530021,
+    "share_no_fix": 0.040372670807453416,
+    "median_p90_err_m": 0.03108611887932674
+   },
+   "routes": [
+    {
+     "start": [
+      3.875,
+      19.875
+     ],
+     "goal": [
+      24.375,
+      17.125
+     ],
+     "shortest": {
+      "route_m": 26.078427124746188,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08340521030956094
+     },
+     "risk_weighted": {
+      "route_m": 26.285533905932734,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07862052855708956
+     },
+     "drift_aware": {
+      "route_m": 26.078427124746188,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08149391664576228
+     }
+    },
+    {
+     "start": [
+      14.375,
+      15.375
+     ],
+     "goal": [
+      1.875,
+      17.875
+     ],
+     "shortest": {
+      "route_m": 13.53553390593273,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07908468141119426
+     },
+     "risk_weighted": {
+      "route_m": 13.949747468305826,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07332144922442993
+     },
+     "drift_aware": {
+      "route_m": 13.53553390593273,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07718962570085919
+     }
+    },
+    {
+     "start": [
+      30.625,
+      5.125
+     ],
+     "goal": [
+      20.375,
+      18.875
+     ],
+     "shortest": {
+      "route_m": 25.510407640085642,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.16919350243380016
+     },
+     "risk_weighted": {
+      "route_m": 25.924621202458734,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1719200229192885
+     },
+     "drift_aware": {
+      "route_m": 25.510407640085642,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.16345746093963426
+     }
+    },
+    {
+     "start": [
+      29.375,
+      2.875
+     ],
+     "goal": [
+      13.875,
+      18.875
+     ],
+     "shortest": {
+      "route_m": 34.778174593052036,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.19026769566660517
+     },
+     "risk_weighted": {
+      "route_m": 35.192388155425135,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.20124101224397517
+     },
+     "drift_aware": {
+      "route_m": 34.778174593052036,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.19850814682299595
+     }
+    },
+    {
+     "start": [
+      20.375,
+      20.875
+     ],
+     "goal": [
+      6.625,
+      15.625
+     ],
+     "shortest": {
+      "route_m": 17.65685424949238,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08132311537346484
+     },
+     "risk_weighted": {
+      "route_m": 17.863961030678926,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07740319379862763
+     },
+     "drift_aware": {
+      "route_m": 17.65685424949238,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08138545484234946
+     }
+    }
+   ],
+   "secs": 98.2
+  },
+  "14": {
+   "meta": {
+    "seed": 14,
+    "W": 20.0,
+    "L": 20.0,
+    "dark": [
+     [
+      "corridor_south",
+      7.386905670506511,
+      14.436159360631285
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      14.56890142423735,
+      18.56890142423735
+     ],
+     [
+      "corridor_south_dark",
+      8.540260866674233,
+      11.540260866674233
+     ],
+     [
+      "corridor_north_lit",
+      6.200184529628139,
+      9.200184529628139
+     ]
+    ]
+   },
+   "map": {
+    "points": 348,
+    "mean_fix_rate": 0.8869731800766283,
+    "share_no_fix": 0.05747126436781609,
+    "median_p90_err_m": 0.03743419431940359
+   },
+   "routes": [
+    {
+     "start": [
+      13.125,
+      0.625
+     ],
+     "goal": [
+      8.875,
+      17.125
+     ],
+     "shortest": {
+      "route_m": 20.26040764008565,
+      "hazard_rate": 0.32,
+      "reached": 1.0,
+      "median_max_error_m": 0.4600004872865316
+     },
+     "risk_weighted": {
+      "route_m": 26.91726188957803,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.12453724541019498
+     },
+     "drift_aware": {
+      "route_m": 20.26040764008565,
+      "hazard_rate": 0.16,
+      "reached": 1.0,
+      "median_max_error_m": 0.4426138843910674
+     }
+    },
+    {
+     "start": [
+      4.375,
+      18.375
+     ],
+     "goal": [
+      19.875,
+      7.125
+     ],
+     "shortest": {
+      "route_m": 25.67462120245874,
+      "hazard_rate": 0.365,
+      "reached": 1.0,
+      "median_max_error_m": 0.49314002250852584
+     },
+     "risk_weighted": {
+      "route_m": 27.29594154601838,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.10412419252206226
+     },
+     "drift_aware": {
+      "route_m": 26.113961030678922,
+      "hazard_rate": 0.025,
+      "reached": 1.0,
+      "median_max_error_m": 0.10432504711305936
+     }
+    },
+    {
+     "start": [
+      3.125,
+      15.875
+     ],
+     "goal": [
+      11.625,
+      9.375
+     ],
+     "shortest": {
+      "route_m": 20.63172798364529,
+      "hazard_rate": 0.18,
+      "reached": 1.0,
+      "median_max_error_m": 0.4375501015128344
+     },
+     "risk_weighted": {
+      "route_m": 30.753048327204926,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.11698448141456244
+     },
+     "drift_aware": {
+      "route_m": 21.045941546018383,
+      "hazard_rate": 0.185,
+      "reached": 1.0,
+      "median_max_error_m": 0.47581248468563453
+     }
+    },
+    {
+     "start": [
+      17.875,
+      2.125
+     ],
+     "goal": [
+      4.375,
+      16.625
+     ],
+     "shortest": {
+      "route_m": 23.995689014324213,
+      "hazard_rate": 0.265,
+      "reached": 1.0,
+      "median_max_error_m": 0.43382253489306644
+     },
+     "risk_weighted": {
+      "route_m": 30.192388155425103,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.12333274765750028
+     },
+     "drift_aware": {
+      "route_m": 23.995689014324213,
+      "hazard_rate": 0.015,
+      "reached": 1.0,
+      "median_max_error_m": 0.3933382934428169
+     }
+    },
+    {
+     "start": [
+      2.875,
+      6.375
+     ],
+     "goal": [
+      17.375,
+      19.375
+     ],
+     "shortest": {
+      "route_m": 24.278174593052015,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.12305047636940242
+     },
+     "risk_weighted": {
+      "route_m": 24.48528137423856,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.13679075439009958
+     },
+     "drift_aware": {
+      "route_m": 24.278174593052015,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.12607267279159218
+     }
+    }
+   ],
+   "secs": 53.7
+  },
+  "15": {
+   "meta": {
+    "seed": 15,
+    "W": 32.0,
+    "L": 22.0,
+    "dark": [],
+    "stairwells": [
+     [
+      "hall",
+      26.277795962108325,
+      30.277795962108325
+     ],
+     [
+      "corridor_north_lit",
+      23.433411011485067,
+      26.433411011485067
+     ]
+    ]
+   },
+   "map": {
+    "points": 638,
+    "mean_fix_rate": 0.9843260188087775,
+    "share_no_fix": 0.001567398119122257,
+    "median_p90_err_m": 0.029589021051657657
+   },
+   "routes": [
+    {
+     "start": [
+      11.625,
+      12.625
+     ],
+     "goal": [
+      2.625,
+      21.375
+     ],
+     "shortest": {
+      "route_m": 28.99264068711928,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.06774122409026982
+     },
+     "risk_weighted": {
+      "route_m": 29.406854249492373,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07946142819312121
+     },
+     "drift_aware": {
+      "route_m": 28.99264068711928,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.06803552287882036
+     }
+    },
+    {
+     "start": [
+      26.875,
+      14.375
+     ],
+     "goal": [
+      0.875,
+      19.625
+     ],
+     "shortest": {
+      "route_m": 29.346194077712553,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.05871845860954296
+     },
+     "risk_weighted": {
+      "route_m": 29.346194077712553,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.05793946107978289
+     },
+     "drift_aware": {
+      "route_m": 29.346194077712553,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.059148082013404324
+     }
+    },
+    {
+     "start": [
+      18.875,
+      17.875
+     ],
+     "goal": [
+      4.625,
+      9.875
+     ],
+     "shortest": {
+      "route_m": 32.0533008588991,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.06480563391085234
+     },
+     "risk_weighted": {
+      "route_m": 32.0533008588991,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.06322452039910259
+     },
+     "drift_aware": {
+      "route_m": 32.0533008588991,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.06453465022337335
+     }
+    },
+    {
+     "start": [
+      2.875,
+      19.625
+     ],
+     "goal": [
+      20.875,
+      17.125
+     ],
+     "shortest": {
+      "route_m": 23.24264068711928,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.055094217367989265
+     },
+     "risk_weighted": {
+      "route_m": 23.24264068711928,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.05430925282945445
+     },
+     "drift_aware": {
+      "route_m": 23.24264068711928,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.054648311697584676
+     }
+    },
+    {
+     "start": [
+      30.375,
+      9.125
+     ],
+     "goal": [
+      9.375,
+      2.875
+     ],
+     "shortest": {
+      "route_m": 26.785533905932734,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1361841074224744
+     },
+     "risk_weighted": {
+      "route_m": 26.785533905932734,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08920019212158513
+     },
+     "drift_aware": {
+      "route_m": 26.785533905932734,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1439868499643498
+     }
+    }
+   ],
+   "secs": 98.1
+  },
+  "16": {
+   "meta": {
+    "seed": 16,
+    "W": 28.0,
+    "L": 20.0,
+    "dark": [],
+    "stairwells": [
+     [
+      "hall",
+      21.15139919329991,
+      25.15139919329991
+     ],
+     [
+      "corridor_north_lit",
+      4.954956737995808,
+      7.954956737995808
+     ]
+    ]
+   },
+   "map": {
+    "points": 532,
+    "mean_fix_rate": 0.9931077694235587,
+    "share_no_fix": 0.0018796992481203006,
+    "median_p90_err_m": 0.044114692527274305
+   },
+   "routes": [
+    {
+     "start": [
+      18.125,
+      1.875
+     ],
+     "goal": [
+      6.625,
+      4.125
+     ],
+     "shortest": {
+      "route_m": 14.260407640085653,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.0670251117843527
+     },
+     "risk_weighted": {
+      "route_m": 14.260407640085653,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.0634709705669095
+     },
+     "drift_aware": {
+      "route_m": 14.260407640085653,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.06560842216033769
+     }
+    },
+    {
+     "start": [
+      24.875,
+      6.625
+     ],
+     "goal": [
+      12.375,
+      11.375
+     ],
+     "shortest": {
+      "route_m": 17.224873734152915,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07216017841618011
+     },
+     "risk_weighted": {
+      "route_m": 17.224873734152915,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07457862042831112
+     },
+     "drift_aware": {
+      "route_m": 17.224873734152915,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07342126926912496
+     }
+    },
+    {
+     "start": [
+      0.625,
+      8.125
+     ],
+     "goal": [
+      10.375,
+      2.625
+     ],
+     "shortest": {
+      "route_m": 13.492640687119284,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08237351713494864
+     },
+     "risk_weighted": {
+      "route_m": 13.492640687119284,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.0849056355194952
+     },
+     "drift_aware": {
+      "route_m": 13.492640687119284,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.0855570382729691
+     }
+    },
+    {
+     "start": [
+      1.125,
+      15.625
+     ],
+     "goal": [
+      16.375,
+      3.125
+     ],
+     "shortest": {
+      "route_m": 28.528174593052015,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.09538560746036256
+     },
+     "risk_weighted": {
+      "route_m": 28.528174593052015,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.09810100833384414
+     },
+     "drift_aware": {
+      "route_m": 28.528174593052015,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.09608877372042257
+     }
+    },
+    {
+     "start": [
+      8.875,
+      14.625
+     ],
+     "goal": [
+      19.875,
+      10.125
+     ],
+     "shortest": {
+      "route_m": 34.8033008588991,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.10165916928446606
+     },
+     "risk_weighted": {
+      "route_m": 34.8033008588991,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.10316722284623323
+     },
+     "drift_aware": {
+      "route_m": 34.8033008588991,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.09943192114365504
+     }
+    }
+   ],
+   "secs": 72.3
+  },
+  "17": {
+   "meta": {
+    "seed": 17,
+    "W": 28.0,
+    "L": 18.0,
+    "dark": [
+     [
+      "corridor_north",
+      9.173184601427176,
+      14.88584259780161
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      1.4614541856523269,
+      5.461454185652327
+     ],
+     [
+      "corridor_north_lit",
+      6.177426101117785,
+      9.177426101117785
+     ]
+    ]
+   },
+   "map": {
+    "points": 456,
+    "mean_fix_rate": 0.9744152046783626,
+    "share_no_fix": 0.0021929824561403508,
+    "median_p90_err_m": 0.04129667450803814
+   },
+   "routes": [
+    {
+     "start": [
+      11.625,
+      15.375
+     ],
+     "goal": [
+      22.375,
+      0.625
+     ],
+     "shortest": {
+      "route_m": 34.192388155425114,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.15905438634240707
+     },
+     "risk_weighted": {
+      "route_m": 35.48528137423858,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1962967875845571
+     },
+     "drift_aware": {
+      "route_m": 34.338834764831844,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1758428355949092
+     }
+    },
+    {
+     "start": [
+      11.875,
+      13.125
+     ],
+     "goal": [
+      1.375,
+      10.625
+     ],
+     "shortest": {
+      "route_m": 12.121320343559638,
+      "hazard_rate": 0.065,
+      "reached": 1.0,
+      "median_max_error_m": 0.15332155509536452
+     },
+     "risk_weighted": {
+      "route_m": 12.121320343559638,
+      "hazard_rate": 0.025,
+      "reached": 1.0,
+      "median_max_error_m": 0.16107054764454506
+     },
+     "drift_aware": {
+      "route_m": 12.121320343559638,
+      "hazard_rate": 0.025,
+      "reached": 1.0,
+      "median_max_error_m": 0.14114161216197937
+     }
+    },
+    {
+     "start": [
+      22.375,
+      10.125
+     ],
+     "goal": [
+      13.375,
+      3.875
+     ],
+     "shortest": {
+      "route_m": 11.588834764831839,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.06828832156420842
+     },
+     "risk_weighted": {
+      "route_m": 11.588834764831839,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07053230445552461
+     },
+     "drift_aware": {
+      "route_m": 11.588834764831839,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.06964046481322622
+     }
+    },
+    {
+     "start": [
+      23.875,
+      7.375
+     ],
+     "goal": [
+      3.625,
+      5.375
+     ],
+     "shortest": {
+      "route_m": 21.078427124746185,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.18242128636908547
+     },
+     "risk_weighted": {
+      "route_m": 21.285533905932734,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1819158764314263
+     },
+     "drift_aware": {
+      "route_m": 21.078427124746185,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1768868046029889
+     }
+    },
+    {
+     "start": [
+      14.125,
+      4.375
+     ],
+     "goal": [
+      24.625,
+      13.625
+     ],
+     "shortest": {
+      "route_m": 20.17462120245874,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.0778423494006596
+     },
+     "risk_weighted": {
+      "route_m": 20.82106781186547,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07908048149753899
+     },
+     "drift_aware": {
+      "route_m": 20.17462120245874,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07495012921943159
+     }
+    }
+   ],
+   "secs": 68.6
+  },
+  "18": {
+   "meta": {
+    "seed": 18,
+    "W": 32.0,
+    "L": 19.0,
+    "dark": [
+     [
+      "corridor_north",
+      14.278534907359042,
+      20.855818755964027
+     ]
+    ],
+    "stairwells": [
+     [
+      "hall",
+      25.078536404385797,
+      29.078536404385797
+     ],
+     [
+      "corridor_north_lit",
+      8.511456580575004,
+      11.511456580575004
+     ]
+    ]
+   },
+   "map": {
+    "points": 548,
+    "mean_fix_rate": 0.968978102189781,
+    "share_no_fix": 0.010948905109489052,
+    "median_p90_err_m": 0.044069911268992484
+   },
+   "routes": [
+    {
+     "start": [
+      28.375,
+      17.125
+     ],
+     "goal": [
+      17.875,
+      15.875
+     ],
+     "shortest": {
+      "route_m": 20.113961030678922,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.27935815816036325
+     },
+     "risk_weighted": {
+      "route_m": 19.906854249492376,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.30788558891476775
+     },
+     "drift_aware": {
+      "route_m": 20.113961030678922,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2849219121541803
+     }
+    },
+    {
+     "start": [
+      28.875,
+      18.375
+     ],
+     "goal": [
+      27.875,
+      4.125
+     ],
+     "shortest": {
+      "route_m": 17.028174593052015,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08000727131762447
+     },
+     "risk_weighted": {
+      "route_m": 17.028174593052015,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08235628350143095
+     },
+     "drift_aware": {
+      "route_m": 17.028174593052015,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08099849663114186
+     }
+    },
+    {
+     "start": [
+      31.375,
+      9.625
+     ],
+     "goal": [
+      16.125,
+      14.875
+     ],
+     "shortest": {
+      "route_m": 18.742640687119284,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.3203515033770934
+     },
+     "risk_weighted": {
+      "route_m": 18.742640687119284,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.31725133583608045
+     },
+     "drift_aware": {
+      "route_m": 18.742640687119284,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.2579300983591256
+     }
+    },
+    {
+     "start": [
+      27.625,
+      13.375
+     ],
+     "goal": [
+      9.125,
+      13.625
+     ],
+     "shortest": null,
+     "risk_weighted": null,
+     "drift_aware": null
+    },
+    {
+     "start": [
+      27.375,
+      14.125
+     ],
+     "goal": [
+      18.125,
+      6.625
+     ],
+     "shortest": {
+      "route_m": 21.406854249492376,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.09242185193490976
+     },
+     "risk_weighted": {
+      "route_m": 21.613961030678922,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08348962615964375
+     },
+     "drift_aware": {
+      "route_m": 21.406854249492376,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.0900777182637208
+     }
+    }
+   ],
+   "secs": 78.0
+  },
+  "19": {
+   "meta": {
+    "seed": 19,
+    "W": 28.0,
+    "L": 20.0,
+    "dark": [],
+    "stairwells": [
+     [
+      "hall",
+      2.9013935820602876,
+      6.901393582060288
+     ],
+     [
+      "corridor_north_lit",
+      14.68606329996326,
+      17.68606329996326
+     ]
+    ]
+   },
+   "map": {
+    "points": 503,
+    "mean_fix_rate": 0.9847581179589131,
+    "share_no_fix": 0.003976143141153081,
+    "median_p90_err_m": 0.031054510780153727
+   },
+   "routes": [
+    {
+     "start": [
+      8.125,
+      19.125
+     ],
+     "goal": [
+      5.125,
+      1.625
+     ],
+     "shortest": {
+      "route_m": 23.899494936611653,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.10107421133887626
+     },
+     "risk_weighted": {
+      "route_m": 24.313708498984745,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.1051934717097307
+     },
+     "drift_aware": {
+      "route_m": 23.899494936611653,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.099233023924195
+     }
+    },
+    {
+     "start": [
+      1.625,
+      15.375
+     ],
+     "goal": [
+      10.375,
+      9.125
+     ],
+     "shortest": {
+      "route_m": 21.7175144212722,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.07595917354569814
+     },
+     "risk_weighted": {
+      "route_m": 22.13172798364529,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08062111197857072
+     },
+     "drift_aware": {
+      "route_m": 21.7175144212722,
+      "hazard_rate": 0.0,
+      "reached": 1.0,
+      "median_max_error_m": 0.08017234304507231
+     }
+    },
+    {
+     "start": [
+      15.875,
+      12.875
+     ],
+     "goal": [
+      22.375,
+      3.625
+     ],
+     "shortest": {
+      "route_m": 21.613961030678915,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.08527256042067367
+     },
+     "risk_weighted": {
+      "route_m": 21.613961030678915,
+      "hazard_rate": 0.01,
+      "reached": 1.0,
+      "median_max_error_m": 0.08679239293034281
+     },
+     "drift_aware": {
+      "route_m": 21.613961030678915,
+      "hazard_rate": 0.01,
+      "reached": 1.0,
+      "median_max_error_m": 0.08811540223238044
+     }
+    },
+    {
+     "start": [
+      2.875,
+      19.125
+     ],
+     "goal": [
+      19.125,
+      13.375
+     ],
+     "shortest": {
+      "route_m": 21.38908729652601,
+      "hazard_rate": 0.015,
+      "reached": 1.0,
+      "median_max_error_m": 0.07734206825675455
+     },
+     "risk_weighted": {
+      "route_m": 21.38908729652601,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.06984866819951563
+     },
+     "drift_aware": {
+      "route_m": 21.38908729652601,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.07854826022032024
+     }
+    },
+    {
+     "start": [
+      18.375,
+      18.375
+     ],
+     "goal": [
+      6.375,
+      9.125
+     ],
+     "shortest": {
+      "route_m": 33.90685424949238,
+      "hazard_rate": 0.005,
+      "reached": 1.0,
+      "median_max_error_m": 0.08170989357220507
+     },
+     "risk_weighted": {
+      "route_m": 34.321067811865476,
+      "hazard_rate": 0.015,
+      "reached": 1.0,
+      "median_max_error_m": 0.08525461651363557
+     },
+     "drift_aware": {
+      "route_m": 33.90685424949238,
+      "hazard_rate": 0.01,
+      "reached": 1.0,
+      "median_max_error_m": 0.08328189160757506
+     }
+    }
+   ],
+   "secs": 72.7
+  }
+ }
+}

@@ -1,0 +1,91 @@
+{
+ "buildings": 20,
+ "routes": 100,
+ "map_mean_fix_rate": 0.9421321982225116,
+ "no_path": {
+  "shortest": 4,
+  "risk_weighted": 4,
+  "drift_aware": 4
+ },
+ "all": {
+  "routes": 96,
+  "shortest": {
+   "mean_hazard_rate": 0.0584375,
+   "max_hazard_rate": 0.57,
+   "routes_over_1pct": 25,
+   "median_length_ratio": 1.0,
+   "max_length_ratio": 1.0,
+   "reached": 0.9994791666666667
+  },
+  "risk_weighted": {
+   "mean_hazard_rate": 0.0033333333333333335,
+   "max_hazard_rate": 0.145,
+   "routes_over_1pct": 6,
+   "median_length_ratio": 1.0132515355049128,
+   "max_length_ratio": 2.8022777482126977,
+   "reached": 1.0
+  },
+  "drift_aware": {
+   "mean_hazard_rate": 0.011041666666666667,
+   "max_hazard_rate": 0.185,
+   "routes_over_1pct": 16,
+   "median_length_ratio": 1.0,
+   "max_length_ratio": 1.0200765327412924,
+   "reached": 0.9991666666666666
+  }
+ },
+ "risky": {
+  "routes": 25,
+  "shortest": {
+   "mean_hazard_rate": 0.22279999999999997,
+   "max_hazard_rate": 0.57,
+   "routes_over_1pct": 25,
+   "median_length_ratio": 1.0,
+   "max_length_ratio": 1.0,
+   "reached": 1.0
+  },
+  "risk_weighted": {
+   "mean_hazard_rate": 0.01,
+   "max_hazard_rate": 0.145,
+   "routes_over_1pct": 4,
+   "median_length_ratio": 1.2603826304297256,
+   "max_length_ratio": 2.8022777482126977,
+   "reached": 1.0
+  },
+  "drift_aware": {
+   "mean_hazard_rate": 0.04019999999999999,
+   "max_hazard_rate": 0.185,
+   "routes_over_1pct": 15,
+   "median_length_ratio": 1.0,
+   "max_length_ratio": 1.0200765327412924,
+   "reached": 0.9998
+  }
+ },
+ "safe": {
+  "routes": 71,
+  "shortest": {
+   "mean_hazard_rate": 0.0005633802816901408,
+   "max_hazard_rate": 0.01,
+   "routes_over_1pct": 0,
+   "median_length_ratio": 1.0,
+   "max_length_ratio": 1.0,
+   "reached": 0.9992957746478873
+  },
+  "risk_weighted": {
+   "mean_hazard_rate": 0.0009859154929577464,
+   "max_hazard_rate": 0.03,
+   "routes_over_1pct": 2,
+   "median_length_ratio": 1.0087546205003564,
+   "max_length_ratio": 1.4620327573047593,
+   "reached": 1.0
+  },
+  "drift_aware": {
+   "mean_hazard_rate": 0.0007746478873239438,
+   "max_hazard_rate": 0.02,
+   "routes_over_1pct": 1,
+   "median_length_ratio": 1.0,
+   "max_length_ratio": 1.0192866848890574,
+   "reached": 0.9989436619718309
+  }
+ }
+}

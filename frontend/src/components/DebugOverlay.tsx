@@ -8,9 +8,10 @@
  */
 
 import { Cpu, Wifi, ShieldAlert, Navigation, Clock, Signal, CheckCircle2, XCircle, EyeOff, Zap, Activity, AlertCircle, Loader } from "lucide-react";
-import { SimulationState, PhysicsMetrics, CommunicationMetrics, LocalizationMetrics, IntegratedMetrics, AdaptiveMetrics, PowerMetrics, JointMetrics } from "../types";
+import { SimulationState, PhysicsMetrics, CommunicationMetrics, LocalizationMetrics, MulticellMetrics, IntegratedMetrics, AdaptiveMetrics, PowerMetrics, JointMetrics } from "../types";
 import CommunicationPanel from "./CommunicationPanel";
 import LocalizationPanel from "./LocalizationPanel";
+import MultiLightPanel from "./MultiLightPanel";
 import IntegratedPanel from "./IntegratedPanel";
 import AdaptivePanel from "./AdaptivePanel";
 import PowerPanel from "./PowerPanel";
@@ -24,6 +25,8 @@ interface DebugOverlayProps {
   commLoading: boolean;
   localizationMetrics: LocalizationMetrics | null;
   localizationLoading: boolean;
+  multicellMetrics?: MulticellMetrics | null;
+  multicellLoading?: boolean;
   integratedMetrics: IntegratedMetrics | null;
   integratedLoading: boolean;
   adaptiveMetrics: AdaptiveMetrics | null;
@@ -329,7 +332,7 @@ function PhysicsPanel({ metrics, loading }: { metrics: PhysicsMetrics | null; lo
 }
 
 // ─── Main Export ───────────────────────────────────────────────────────────
-export default function DebugOverlay({ state, physicsMetrics, physicsLoading, commMetrics, commLoading, localizationMetrics, localizationLoading, integratedMetrics, integratedLoading, adaptiveMetrics, adaptiveLoading,
+export default function DebugOverlay({ state, physicsMetrics, physicsLoading, commMetrics, commLoading, localizationMetrics, localizationLoading, multicellMetrics, multicellLoading, integratedMetrics, integratedLoading, adaptiveMetrics, adaptiveLoading,
   powerMetrics,
   powerLoading,
   jointMetrics,
@@ -511,7 +514,11 @@ export default function DebugOverlay({ state, physicsMetrics, physicsLoading, co
         <CommunicationPanel metrics={commMetrics} loading={commLoading} />
 
         {/* ── Localization Engine Metrics (Python backend — Module 4) ── */}
-        <LocalizationPanel metrics={localizationMetrics} loading={localizationLoading} />
+        {state.leds.length > 4 ? (
+          <MultiLightPanel metrics={multicellMetrics ?? null} loading={!!multicellLoading} numLeds={state.leds.length} />
+        ) : (
+          <LocalizationPanel metrics={localizationMetrics} loading={localizationLoading} />
+        )}
 
         {/* ── Integrated Engine Metrics (Python backend — Module 5) ── */}
         <IntegratedPanel metrics={integratedMetrics} loading={integratedLoading} />

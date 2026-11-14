@@ -8,12 +8,14 @@
 import React, { useState } from "react";
 import { Play, Pause, RotateCcw, Sliders, RefreshCw, ChevronDown, ChevronUp, Zap, Cpu, Move3D, Info } from "lucide-react";
 import { SimulationState } from "../types";
+import { REUSE_COLOURS_CSS, reuseColours } from "../lightLayout";
 
 // ─── Props ─────────────────────────────────────────────────────────────────
 interface ControlPanelProps {
   state: SimulationState;
   setState: React.Dispatch<React.SetStateAction<SimulationState>>;
   onReset: () => void;
+  onLayout?: (n: number, spacing: number) => void;
 }
 
 // ─── Helper: Section Header ────────────────────────────────────────────────
@@ -153,7 +155,12 @@ export default function ControlPanel({
   state,
   setState,
   onReset,
+  onLayout,
 }: ControlPanelProps) {
+  const [gridSpacing, setGridSpacing] = useState(1.5);
+  const gridN = state.leds.length > 4 ? Math.round(Math.sqrt(state.leds.length)) : 2;
+  const colourOf = reuseColours(state.leds);
+  const colourCounts = [1, 2, 3, 4].map((c) => Object.values(colourOf).filter((v) => v === c).length);
 
   const handleTogglePlay = () => setState((prev) => ({ ...prev, isPlaying: !prev.isPlaying }));
 
@@ -299,6 +306,62 @@ export default function ControlPanel({
           )}
         </div>
 
+        {/* ── Section 2b: Ceiling light layout ── */}
+        {onLayout && (
+          <div className="px-4 py-4">
+            <SectionHeader
+              icon={<Cpu className="w-4 h-4" />}
+              title="Ceiling Light Layout"
+              subtitle="Choose how many LEDs are on the ceiling. Bigger grids make a bigger room."
+              color="text-amber-300"
+            />
+            <div className="grid grid-cols-3 gap-1.5">
+              {[[2, "4 (paper)"], [4, "4×4 = 16"], [6, "6×6 = 36"]].map(([n, label]) => (
+                <button
+                  key={n as number}
+                  data-testid={`layout-${n}`}
+                  onClick={() => onLayout(n as number, gridSpacing)}
+                  className={`px-1.5 py-1.5 text-[11px] font-bold rounded-lg border transition ${
+                    gridN === n
+                      ? "bg-amber-400 text-slate-950 border-amber-300"
+                      : "bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3">
+              <LabeledSlider
+                label="Grid spacing (between neighbouring LEDs)"
+                value={gridSpacing}
+                unit=" m"
+                min={0.8}
+                max={2.5}
+                step={0.1}
+                onChange={(val) => {
+                  setGridSpacing(val);
+                  if (state.leds.length > 4) onLayout(gridN, val);
+                }}
+              />
+            </div>
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              {colourCounts.map((count, i) => (
+                <span key={i} className="flex items-center gap-1 text-[10px] text-slate-400">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: REUSE_COLOURS_CSS[i] }} />
+                  {i === 0 ? "tones 1+5" : `tone ${i + 1}`} × {count}
+                </span>
+              ))}
+            </div>
+            <p className="text-slate-500 text-[10px] leading-relaxed mt-2">
+              There are only a few frequency tones, so lights with the same colour reuse the same tones.
+              With more than 4 LEDs the Localization panel compares the interference-aware solver
+              against the old "nearest light only" assumption. Odd grids such as 3×3 are left out on purpose:
+              their colour pattern looks the same after a half turn, so a position and its mirror image give identical signals.
+            </p>
+          </div>
+        )}
+
         {/* ── Section 3: LED Powers ── */}
         <div className="px-4 py-4">
           <SectionHeader
@@ -307,7 +370,18 @@ export default function ControlPanel({
             subtitle="Higher power = stronger signal."
           />
           <div className="flex flex-col gap-3 mt-2">
-            {state.leds.map((led) => (
+            {state.leds.length > 4 && (
+              <LabeledSlider
+                label={`All ${state.leds.length} LEDs`}
+                value={state.leds[0].power}
+                unit="W"
+                min={5}
+                max={50}
+                step={1}
+                onChange={(val) => setState((prev) => ({ ...prev, leds: prev.leds.map((l) => ({ ...l, power: val })) }))}
+              />
+            )}
+            {state.leds.length <= 4 && state.leds.map((led) => (
               <LabeledSlider
                 key={led.id}
                 label={`LED ${led.id} (${led.position[0]}, ${led.position[1]}, ${led.position[2]})`}

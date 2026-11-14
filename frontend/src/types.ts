@@ -259,6 +259,23 @@ export interface IntegratedMetrics {
   metadata: Record<string, unknown>;
 }
 
+// Rooms with more than four LEDs (Python backend — integrated_vlcl/multicell.py)
+export interface MulticellFix {
+  success: boolean;
+  status: string | null;
+  estimated_position: [number, number, number] | null;
+  error_xy_m: number | null;
+  error_3d_m: number | null;
+  cell?: Record<string, number>;
+}
+export interface MulticellMetrics {
+  num_leds: number;
+  colours: Record<string, number>;          // LED id -> tone set 1..4
+  true_position: [number, number, number];
+  interference_aware: MulticellFix;          // models every LED that shares a tone
+  nearest_cell: MulticellFix;                // assumes each tone comes from the nearest LED
+}
+
 export interface SimulationState {
   currentTime: number;
   frameIndex: number;
@@ -292,6 +309,10 @@ export interface SimulationState {
   // Localization engine metrics (Python backend — Module 4)
   localizationMetrics: LocalizationMetrics | null;
   localizationLoading: boolean;
+
+  // Many-light localization (Python backend — multicell), used when there are more than 4 LEDs
+  multicellMetrics: MulticellMetrics | null;
+  multicellLoading: boolean;
 
   // Integrated engine metrics (Python backend — Module 5)
   integratedMetrics: IntegratedMetrics | null;

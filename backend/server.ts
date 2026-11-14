@@ -470,7 +470,7 @@ try:
     result["signals"]["received_powers"] = str_keys(result["signals"]["received_powers"])
     result["signals"]["localization_snr"] = str_keys(result["signals"]["localization_snr"])
 
-    print(json.dumps(result))
+    print(json.dumps((lambda f: f(f, result))(lambda f, o: {k: f(f, v) for k, v in o.items()} if isinstance(o, dict) else [f(f, v) for v in o] if isinstance(o, (list, tuple)) else (None if isinstance(o, float) and (o != o or abs(o) == float("inf")) else o))))  # NaN/Infinity -> null (JS JSON.parse rejects them)
 except Exception as e:
     import traceback
     print(json.dumps({"__error__": str(e), "__traceback__": traceback.format_exc()}))
@@ -509,6 +509,121 @@ except Exception as e:
     );
   });
 
+
+  // API Route: rooms with more than four LEDs (tone reuse, integrated_vlcl/multicell.py)
+  // Runs the full integrated chain with every LED in the room, twice: the interference-aware
+  // solver (models every LED that shares a tone) and the nearest-LED baseline.
+  app.post("/api/multicell", (req, res) => {
+    const envState = req.body;
+
+    const isWin = process.platform === "win32";
+    const venvPythonPath = isWin
+      ? path.join(BASE_DIR, "VLCL_AI", ".venv", "Scripts", "python.exe")
+      : path.join(BASE_DIR, "VLCL_AI", ".venv", "bin", "python3");
+    const pythonCmd = fs.existsSync(venvPythonPath) ? venvPythonPath : (isWin ? "python" : "python3");
+
+    const inlineScript = `
+import sys, os, json, math, dataclasses
+try:
+    sys.path.insert(0, r"${BASE_DIR.replace(/\\/g, "\\\\")}")
+    from loguru import logger
+    logger.remove()
+    import numpy as np
+    from VLCL_AI.environment.state import EnvironmentState
+    from VLCL_AI.physics.physics_engine import PhysicsEngine
+    from VLCL_AI.integrated_vlcl.multicell import MultiCellVLCLEngine, assign_reuse_colours
+
+    with open(sys.argv[1], "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    env_state = EnvironmentState(
+        current_time=data.get("current_time", 0.0),
+        frame_index=data.get("frame_index", 0),
+        fps=data.get("fps", 60.0),
+        receiver_position=data["receiver_position"],
+        receiver_orientation=data["receiver_orientation"],
+        receiver_velocity=data.get("receiver_velocity", [0,0,0]),
+        receiver_acceleration=data.get("receiver_acceleration", [0,0,0]),
+        receiver_angles=data.get("receiver_angles", {"roll":0,"pitch":0,"yaw":0}),
+        room_dims=data.get("room_dims", [5.0, 5.0, 3.0]),
+        led_positions={int(k): v for k,v in data["led_positions"].items()},
+        led_powers={int(k): v for k,v in data["led_powers"].items()},
+        led_active={int(k): v for k,v in data["led_active"].items()},
+        led_orientations={int(k): v for k,v in data["led_orientations"].items()},
+        led_beam_angles={int(k): v for k,v in data["led_beam_angles"].items()},
+        distances={int(k): v for k,v in data["distances"].items()},
+        incident_angles_rad={int(k): v * math.pi / 180.0 for k,v in data["incident_angles"].items()},
+        irradiance_angles_rad={int(k): v * math.pi / 180.0 for k,v in data["irradiance_angles"].items()},
+        visibility_matrix={int(k): v for k,v in data["visibility_matrix"].items()},
+        los_matrix={int(k): v for k,v in data["los_matrix"].items()},
+        blocking_obstacles={int(k): v for k,v in data["blocking_obstacles"].items()},
+        obstacles=data.get("obstacles", [])
+    )
+    if "receiver_fov_deg" in data:
+        env_state = dataclasses.replace(env_state, receiver_hardware=dataclasses.replace(
+            env_state.receiver_hardware, fov_deg=float(data["receiver_fov_deg"])))
+
+    physics_state = PhysicsEngine().compute(env_state)
+    p_true = np.asarray(env_state.receiver_position, float)
+
+    def run(mode):
+        eng = MultiCellVLCLEngine(mode=mode)
+        loc = eng.step(env_state, physics_state).localization_results
+        est = np.asarray(loc["estimated_position"], float)
+        ok = bool(loc.get("success")) and bool(np.all(np.isfinite(est)))
+        out = {"success": ok, "status": loc.get("status"),
+               "estimated_position": [float(v) for v in est] if np.all(np.isfinite(est)) else None,
+               "error_xy_m": float(np.hypot(*(est[:2] - p_true[:2]))) if ok else None,
+               "error_3d_m": float(np.linalg.norm(est - p_true)) if ok else None}
+        cell = loc.get("solver_meta", {}).get("cell")
+        if cell:
+            out["cell"] = {str(k): int(v) for k, v in cell.items()}
+        return out
+
+    result = {
+        "num_leds": len(env_state.led_positions),
+        "colours": {str(k): int(v) for k, v in assign_reuse_colours(env_state.led_positions).items()},
+        "true_position": [float(v) for v in p_true],
+        "interference_aware": run("interference_aware"),
+        "nearest_cell": run("nearest_cell"),
+    }
+    print(json.dumps((lambda f: f(f, result))(lambda f, o: {k: f(f, v) for k, v in o.items()} if isinstance(o, dict) else [f(f, v) for v in o] if isinstance(o, (list, tuple)) else (None if isinstance(o, float) and (o != o or abs(o) == float("inf")) else o))))  # NaN/Infinity -> null (JS JSON.parse rejects them)
+except Exception as e:
+    import traceback
+    print(json.dumps({"__error__": str(e), "__traceback__": traceback.format_exc()}))
+    sys.exit(1)
+`;
+
+    const tmpScript = path.join(BASE_DIR, "VLCL_AI", "logs", "_multicell_tmp.py");
+    const tmpInput = path.join(BASE_DIR, "VLCL_AI", "logs", "_multicell_input.json");
+
+    try {
+      fs.mkdirSync(path.join(BASE_DIR, "VLCL_AI", "logs"), { recursive: true });
+      fs.writeFileSync(tmpScript, inlineScript, "utf-8");
+      fs.writeFileSync(tmpInput, JSON.stringify(envState), "utf-8");
+    } catch (e: any) {
+      return res.status(500).json({ error: "Failed to write temp files: " + e.message });
+    }
+
+    exec(
+      `${pythonCmd} "${tmpScript}" "${tmpInput}"`,
+      { cwd: BASE_DIR, env: { ...process.env, PYTHONIOENCODING: "utf-8", LOGURU_LEVEL: "WARNING" }, timeout: 60000 },
+      (error, stdout, stderr) => {
+        if (error && !stdout.trim()) {
+          return res.status(500).json({ error: stderr || error.message });
+        }
+        try {
+          const result = JSON.parse(stdout.trim().split("\n").pop() || "");
+          if (result.__error__) {
+            return res.status(500).json({ error: result.__error__, traceback: result.__traceback__ });
+          }
+          res.json({ success: true, multicell: result });
+        } catch {
+          res.status(500).json({ error: "Failed to parse multicell output", raw: stdout.slice(0, 500) });
+        }
+      }
+    );
+  });
 
   // API Route: Real-time Integrated VLCL Engine computation (Module 5)
   // Chains Physics -> IntegratedVLCLEngine and returns composite communication + localization metrics
@@ -567,7 +682,7 @@ try:
     # Convert dict keys to str for JSON serialization
     result = integrated_state.to_dict()
     
-    print(json.dumps(result))
+    print(json.dumps((lambda f: f(f, result))(lambda f, o: {k: f(f, v) for k, v in o.items()} if isinstance(o, dict) else [f(f, v) for v in o] if isinstance(o, (list, tuple)) else (None if isinstance(o, float) and (o != o or abs(o) == float("inf")) else o))))  # NaN/Infinity -> null (JS JSON.parse rejects them)
 except Exception as e:
     import traceback
     print(json.dumps({"__error__": str(e), "__traceback__": traceback.format_exc()}))
@@ -706,7 +821,7 @@ try:
     decision = engine.allocate_resources(feedbacks=feedbacks, grid=grid)
 
     result = decision.to_dict()
-    print(json.dumps(result))
+    print(json.dumps((lambda f: f(f, result))(lambda f, o: {k: f(f, v) for k, v in o.items()} if isinstance(o, dict) else [f(f, v) for v in o] if isinstance(o, (list, tuple)) else (None if isinstance(o, float) and (o != o or abs(o) == float("inf")) else o))))  # NaN/Infinity -> null (JS JSON.parse rejects them)
 except Exception as e:
     import traceback
     print(json.dumps({"__error__": str(e), "__traceback__": traceback.format_exc()}))
@@ -893,7 +1008,7 @@ try:
         "feasible_sum_rate_bps": float(power_decision.feasible_sum_rate_bps),
         "warnings": list(power_decision.warnings),
     }
-    print(json.dumps(result))
+    print(json.dumps((lambda f: f(f, result))(lambda f, o: {k: f(f, v) for k, v in o.items()} if isinstance(o, dict) else [f(f, v) for v in o] if isinstance(o, (list, tuple)) else (None if isinstance(o, float) and (o != o or abs(o) == float("inf")) else o))))  # NaN/Infinity -> null (JS JSON.parse rejects them)
 except Exception as e:
     import traceback
     print(json.dumps({"__error__": str(e), "__traceback__": traceback.format_exc()}))
@@ -1004,7 +1119,10 @@ try:
         cp_ratio=0.25,
     )
 
+    # Size the integrated engine to the room's LED count (the default engine assumes 4 LEDs)
+    from VLCL_AI.integrated_vlcl.engine import IntegratedVLCLEngine
     optimizer = JointAdaptiveOptimizer(
+        vlcl_engine=IntegratedVLCLEngine(num_leds=len(data["led_positions"])),
         config=config,
         target_localization_error_m=target_loc_error_m,
         ber_max=ber_max,
@@ -1025,7 +1143,7 @@ try:
     )
 
     result = joint_state.to_dict()
-    print(json.dumps(result))
+    print(json.dumps((lambda f: f(f, result))(lambda f, o: {k: f(f, v) for k, v in o.items()} if isinstance(o, dict) else [f(f, v) for v in o] if isinstance(o, (list, tuple)) else (None if isinstance(o, float) and (o != o or abs(o) == float("inf")) else o))))  # NaN/Infinity -> null (JS JSON.parse rejects them)
 except Exception as e:
     import traceback
     print(json.dumps({"__error__": str(e), "__traceback__": traceback.format_exc()}))

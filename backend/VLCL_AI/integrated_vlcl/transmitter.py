@@ -189,16 +189,23 @@ class IntegratedVLCLTransmitter:
         
         orders = modulation_order_dict or {led_id: 16 for led_id in range(1, self.power_mapper.num_leds + 1)}
         
-        # Step 1 & 2: Process each LED separately
+        # Step 1: modulate every LED's communication subcarriers
+        comm = {}
         for led_id in range(1, self.power_mapper.num_leds + 1):
             bits = bits_dict.get(led_id, np.array([], dtype=int))
             mod_order = orders.get(led_id, 16)
-            
-            # 1. Modulate communication subcarriers
-            x_comm, freq_grid, actual_bits = self.modulate_communication_led(led_id, bits, mod_order)
-            num_samples = len(x_comm)
-            
-            # 2. Synthesize localization tones
+            comm[led_id] = self.modulate_communication_led(led_id, bits, mod_order)
+
+        # All LEDs transmit for the same burst. An LED with little or no data would
+        # otherwise stop after one frame, its localization tones would be missing from
+        # the later frames, and its phase and amplitude would be wrong at the receiver.
+        num_samples = max(len(x) for x, _, _ in comm.values())
+
+        for led_id, (x_comm, freq_grid, actual_bits) in comm.items():
+            if len(x_comm) < num_samples:
+                x_comm = np.pad(x_comm, (0, num_samples - len(x_comm)))
+
+            # 2. Synthesize localization tones over the whole burst
             x_loc = self.generate_localization_led(led_id, num_samples, initial_phase)
             
             # 3. Superpose components FIRST before applying physical LED constraints:

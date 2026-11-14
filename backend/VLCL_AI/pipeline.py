@@ -3,7 +3,11 @@ from typing import Dict, Any, Optional
 from loguru import logger
 
 from VLCL_AI.system_state import SystemState, SimulationMeta
-from VLCL_AI.environment.simulator import VLCLSimulator
+from VLCL_AI.environment.simulator import VLCLSimulator, MobilityEngine
+from VLCL_AI.environment.room import Room
+from VLCL_AI.environment.led import LED
+from VLCL_AI.environment.receiver import Receiver
+from VLCL_AI.environment.scene import Scene
 from VLCL_AI.physics.physics_engine import PhysicsEngine
 from VLCL_AI.communication.engine import CommunicationEngine
 from VLCL_AI.localization.engine import LocalizationEngine
@@ -20,11 +24,11 @@ class VLCLPipeline:
     Manages the lifecycle of SystemState and coordinates all 8 modules
     in the correct dependency order.
     """
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None, simulator: Optional[VLCLSimulator] = None):
         self.config = config or {}
         
         # Instantiate all engine modules
-        self.env_sim = VLCLSimulator()
+        self.env_sim = simulator if simulator is not None else self.paper_reference_simulator()
         self.physics = PhysicsEngine(self.config.get("physics"))
         
         # Modules 3-5 (Integrated base)
@@ -35,13 +39,24 @@ class VLCLPipeline:
         self.power = PowerPreEqualizationEngine()
         self.optimizer = JointAdaptiveOptimizer(vlcl_engine=self.integrated)
         
-        # Utilities
-        self.grid = SubcarrierGrid()
+        # Modules 6 and 7 must plan on the same OFDM grid and the same (grid-snapped)
+        # localization tones the integrated engine transmits; a default grid and plan
+        # put tone power on the wrong bins and the localization tones vanish.
+        self.grid = self.integrated.grid
+        self.frequency_plan = self.integrated.plan
         
         self.state = SystemState(
             simulation=SimulationMeta(),
             config=self.config
         )
+
+    @staticmethod
+    def paper_reference_simulator() -> VLCLSimulator:
+        """The paper's cell: 4 LEDs at (+/-0.4, +/-0.4, 1.35) m, 10 W, a static receiver at 0.85 m."""
+        leds = [LED(i, [x, y, 1.35], [0.0, 0.0, -1.0], power=10.0)
+                for i, (x, y) in enumerate([(-0.4, 0.4), (0.4, 0.4), (-0.4, -0.4), (0.4, -0.4)], 1)]
+        receiver = Receiver([0.1, -0.1, 0.85], [0.0, 0.0, 1.0])
+        return VLCLSimulator(Scene(Room(5.0, 5.0, 3.0), receiver, leds), MobilityEngine("static", speed=0.0))
 
     def step(self, adaptive_mode: bool = False, optimize: bool = False) -> SystemState:
         """
@@ -79,7 +94,8 @@ class VLCLPipeline:
             self.state = self.power.process_state(
                 state=self.state,
                 grid=self.grid,
-                total_power_budget_w=self.config.get("total_power_budget_w", 4.0)
+                total_power_budget_w=self.config.get("total_power_budget_w", 4.0),
+                frequency_plan=self.frequency_plan
             )
             self.state = self.integrated.step_state(self.state)
         else:

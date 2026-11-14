@@ -48,10 +48,52 @@ class IntegratedVLCLReceiver:
         
         self.fft_size = self.partitioner.grid.fft_size
 
+    def sample_noise_variance(self, physics_state: PhysicsState) -> float:
+        """
+        Per-sample photocurrent noise variance (A^2) of the simulated waveform.
+
+        Uses the photodiode's combined noise (all LEDs at once) when physics provides
+        it, rescaled from the physics noise bandwidth to the waveform's Nyquist band:
+        white noise sampled at fs spreads over fs / 2.
+        """
+        if physics_state.total_noise_variance > 0.0:
+            var = physics_state.total_noise_variance
+            if physics_state.noise_bandwidth_hz > 0.0:
+                var *= (self.partitioner.grid.sample_rate / 2.0) / physics_state.noise_bandwidth_hz
+            return float(var)
+        if physics_state.noise_variances:
+            return float(np.mean(list(physics_state.noise_variances.values())))
+        return 1e-12
+
+    @staticmethod
+    def optical_scale(led_id: int, led_optical_powers: Optional[Dict[int, float]], drive_reference: float) -> float:
+        """Watts of optical power per drive unit: the LED emits its rated power at the reference drive."""
+        if led_optical_powers is None:
+            return 1.0
+        return float(led_optical_powers.get(led_id, 1.0)) / drive_reference
+
+    @staticmethod
+    def channel_response(led_id: int, freqs: np.ndarray, physics_state: PhysicsState) -> np.ndarray:
+        """
+        Optical channel of one LED: the direct path at its delay plus first-order
+        reflections as one tap at their gain-weighted mean delay. The single tap is
+        exact to first order while f << 1 / (rms delay spread), i.e. ~100 MHz here.
+        Hand-built states without NLOS delays keep the old total-gain-at-LOS-delay model.
+        """
+        tau_los = physics_state.propagation_times.get(led_id, 0.0)
+        if led_id not in physics_state.nlos_delays:
+            return physics_state.total_gains.get(led_id, 0.0) * np.exp(-1j * 2.0 * np.pi * freqs * tau_los)
+        h_los = physics_state.los_gains.get(led_id, 0.0)
+        h_nlos = physics_state.nlos_gains.get(led_id, 0.0)
+        tau_nlos = physics_state.nlos_delays[led_id]
+        return h_los * np.exp(-1j * 2.0 * np.pi * freqs * tau_los) + h_nlos * np.exp(-1j * 2.0 * np.pi * freqs * tau_nlos)
+
     def propagate_composite(
         self,
         unipolar_signals_dict: Dict[int, np.ndarray],
-        physics_state: PhysicsState
+        physics_state: PhysicsState,
+        led_optical_powers: Optional[Dict[int, float]] = None,
+        drive_reference: float = 1.0
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Propagates the multi-LED transmitted waveforms through the physical channels,
@@ -76,13 +118,11 @@ class IntegratedVLCLReceiver:
         
         # 1. Propagate each LED's signal through its frequency-selective channel
         for led_id, s_tx in unipolar_signals_dict.items():
-            h_optical = physics_state.total_gains.get(led_id, 0.0)
+            scale = self.optical_scale(led_id, led_optical_powers, drive_reference)
             h_led = self.led_response.complex_response(freqs_N)
-            
-            # Apply continuous propagation delay in frequency domain
-            delay = physics_state.propagation_times.get(led_id, 0.0)
-            phase_delay = np.exp(-1j * 2.0 * np.pi * freqs_N * delay)
-            H_N = h_optical * h_led * phase_delay
+
+            # Direct path and reflections, each at its own propagation delay
+            H_N = scale * self.channel_response(led_id, freqs_N, physics_state) * h_led
             
             rx_led = np.zeros_like(s_tx)
             
@@ -100,7 +140,7 @@ class IntegratedVLCLReceiver:
                 elif len(frame_samples) > 0:
                     X_part = np.fft.fft(frame_samples)
                     freqs_p = np.fft.fftfreq(len(frame_samples), d=1.0 / sample_rate)
-                    H_p = h_optical * self.led_response.complex_response(freqs_p) * np.exp(-1j * 2.0 * np.pi * freqs_p * delay)
+                    H_p = scale * self.channel_response(led_id, freqs_p, physics_state) * self.led_response.complex_response(freqs_p)
                     rx_led[start:end] = np.real(np.fft.ifft(X_part * H_p))
             
             if len(rx_led) < n_samples:
@@ -108,8 +148,7 @@ class IntegratedVLCLReceiver:
             composite_rx_clean += rx_led
             
         # 2. Add lumped white receiver noise
-        noise_var = np.mean(list(physics_state.noise_variances.values())) if physics_state.noise_variances else 1e-12
-        std_noise = np.sqrt(noise_var)
+        std_noise = np.sqrt(self.sample_noise_variance(physics_state))
         
         if self.noise_seed is not None:
             rng = np.random.default_rng(self.noise_seed)
@@ -127,7 +166,9 @@ class IntegratedVLCLReceiver:
         transmitted_bits_dict: Dict[int, np.ndarray],
         physics_state: PhysicsState,
         modulation_order_dict: Optional[Dict[int, Any]] = None,
-        drive_gains: Optional[Dict[int, float]] = None
+        drive_gains: Optional[Dict[int, float]] = None,
+        led_optical_powers: Optional[Dict[int, float]] = None,
+        drive_reference: float = 1.0
     ) -> Dict[int, Dict[str, Any]]:
         """
         Processes the communication branch for all active LED groups/users:
@@ -174,24 +215,25 @@ class IntegratedVLCLReceiver:
             rx_symbols_user = freq_grid[:, independent_pos].flatten()
             
             # Map channel response H_n for these specific subcarriers
-            h_optical = physics_state.total_gains.get(led_id, 0.0)
+            scale = self.optical_scale(led_id, led_optical_powers, drive_reference)
             freqs = np.array(independent_pos) * (sample_rate / self.fft_size)
             h_led = self.led_response.complex_response(freqs)
-            
-            # Add phase rotation due to physical propagation delay
-            delay = physics_state.propagation_times.get(led_id, 0.0)
-            phase_rot = np.exp(-1j * 2.0 * np.pi * freqs * delay)
+
+            # Known channel (perfect CSI): direct path plus delayed reflections
+            h_optical_f = scale * self.channel_response(led_id, freqs, physics_state)
             
             # Full channel response includes electrical conversions
             # Driver gain applied by DCO-OFDM at the transmitter (known to the receiver)
             drive_gain = drive_gains.get(led_id, 1.0) if drive_gains else 1.0
-            H_n = h_optical * h_led * phase_rot * electrical_gain * drive_gain
+            H_n = h_optical_f * h_led * electrical_gain * drive_gain
             
             # Tile channel response for all OFDM frames
             H_n_tiled = np.tile(H_n, num_frames)
             
             # Retrieve noise variance for MMSE
-            noise_var = physics_state.noise_variances.get(led_id, 1e-12)
+            # Noise per FFT bin in the units of the received symbols: sample noise through
+            # the TIA, times N because the demodulator's FFT is unnormalised
+            noise_var = self.sample_noise_variance(physics_state) * DEFAULT_TRANSIMPEDANCE_GAIN ** 2 * self.fft_size
             
             # Retrieve subcarrier powers used at TX
             p_comm = self.power_mapper.power_matrix[led_id - 1, independent_pos]
@@ -267,6 +309,54 @@ class IntegratedVLCLReceiver:
             
         return results
 
+    min_tone_snr_db = 20.0  # tone must stand 20 dB clear of the noise in its bin
+    # Measured distance differences that no position explains (e.g. a hidden LED whose
+    # tone still arrives off a wall, with the wall's delay) leave a large fit residual
+    max_residual_rms_m = 0.05
+
+    def tone_rss(
+        self,
+        loc_phasors,
+        drive_gains: Optional[Dict[int, float]] = None,
+        led_optical_powers: Optional[Dict[int, float]] = None,
+        drive_reference: float = 1.0
+    ) -> Dict[int, float]:
+        """
+        Per-LED received signal strength read off the localization tones, as the
+        photocurrent (A) the LED's rated optical power gives through the measured
+        channel gain. An LED carrying two tones gets the mean of both readings.
+        """
+        from VLCL_AI.physics.constants import DEFAULT_RESPONSIVITY, DEFAULT_TRANSIMPEDANCE_GAIN
+        spacing = self.partitioner.grid.sample_rate / self.partitioner.grid.fft_size
+        readings: Dict[int, list] = {}
+        for tone_idx, freq in enumerate(self.partitioner.plan.frequencies):
+            leds = self.power_mapper.tone_to_led_map.get(tone_idx + 1, [])
+            if len(leds) != 1:
+                continue                      # a shared tone cannot be split between LEDs
+            led_id = leds[0]
+            bin_idx = int(round(freq / spacing))
+            tone_amp = np.sqrt(self.power_mapper.power_matrix[led_id - 1, bin_idx])
+            known = (tone_amp * (drive_gains or {}).get(led_id, 1.0)
+                     * self.optical_scale(led_id, led_optical_powers, drive_reference)
+                     * np.abs(self.led_response.complex_response(np.array([freq]))[0])
+                     * DEFAULT_RESPONSIVITY * DEFAULT_TRANSIMPEDANCE_GAIN)
+            if known <= 0:
+                continue
+            h = np.abs(loc_phasors[tone_idx]) / known
+            p_tx = (led_optical_powers or {}).get(led_id, 1.0)
+            readings.setdefault(led_id, []).append(DEFAULT_RESPONSIVITY * p_tx * h)
+        return {k: float(np.mean(v)) for k, v in readings.items()}
+
+    @staticmethod
+    def _at_room_boundary(p_est, pos_solver, tol_m: float = 1e-3) -> bool:
+        bounds = pos_solver.room_bounds
+        if len(bounds) == 6:
+            lo_x, hi_x, lo_y, hi_y = bounds[0], bounds[1], bounds[2], bounds[3]
+        else:
+            from VLCL_AI.environment.coordinate_system import infer_room_bounds
+            lo_x, hi_x, lo_y, hi_y, _, _ = infer_room_bounds(bounds, pos_solver.led_positions)
+        return bool(min(p_est[0] - lo_x, hi_x - p_est[0], p_est[1] - lo_y, hi_y - p_est[1]) < tol_m)
+
     def process_localization_branch(
         self,
         rx_waveform: np.ndarray,
@@ -274,7 +364,13 @@ class IntegratedVLCLReceiver:
         physics_state: PhysicsState,
         room_bounds: Tuple[float, float, float],
         true_position_only_for_eval: Optional[np.ndarray] = None,
-        prev_phases: Optional[np.ndarray] = None
+        prev_phases: Optional[np.ndarray] = None,
+        drive_gains: Optional[Dict[int, float]] = None,
+        led_optical_powers: Optional[Dict[int, float]] = None,
+        drive_reference: float = 1.0,
+        hybrid_solver=None,
+        receiver_normal: Optional[np.ndarray] = None,
+        height_prior_m: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Processes the localization branch:
@@ -316,6 +412,20 @@ class IntegratedVLCLReceiver:
             loc_phasors.append(Y_full[bin_idx])
             
         raw_phases, I_vals, Q_vals = self.phase_estimator.process_phase_equivalent(np.array(loc_phasors))
+
+        # Tone detection: a tone that does not stand clear of the noise (its LED is outside
+        # the field of view, blocked, or too dim) has a random phase, and the solve on it
+        # is meaningless. Noise per averaged, 1/N-scaled bin: sigma^2 T^2 / (N * frames).
+        from VLCL_AI.physics.constants import DEFAULT_TRANSIMPEDANCE_GAIN
+        bin_noise_std = np.sqrt(self.sample_noise_variance(physics_state) * DEFAULT_TRANSIMPEDANCE_GAIN ** 2
+                                / (fft_size * max(1, num_frames)))
+        tone_snr_db = 20.0 * np.log10(np.abs(np.array(loc_phasors)) / max(bin_noise_std, 1e-30) + 1e-30)
+        tones_detected = bool(np.all(tone_snr_db >= self.min_tone_snr_db))
+
+        # RSS from the same tones: undo every gain the receiver knows (tone power, driver
+        # gain, LED power and frequency response, responsivity, TIA) to leave |H_channel|,
+        # then express it as the photocurrent the LED's rated power would give
+        tone_rss = self.tone_rss(loc_phasors, drive_gains, led_optical_powers, drive_reference)
         
         
         # 2. Phase unwrapping
@@ -346,16 +456,32 @@ class IntegratedVLCLReceiver:
                 )
             
             p_guess = None
-            p_est, solver_meta = pos_solver.solve(
-                distance_differences=distance_diffs,
-                initial_guess=p_guess,
-                strategy="previous_or_room_center"
-            )
+            if hybrid_solver is not None:
+                p_est, solver_meta = hybrid_solver.solve(distance_diffs, tone_rss, receiver_normal, height_prior_m)
+            else:
+                p_est, solver_meta = pos_solver.solve(
+                    distance_differences=distance_diffs,
+                    initial_guess=p_guess,
+                    strategy="previous_or_room_center"
+                )
         except SolverError:
             p_est = np.array([0.0, 0.0, 0.85])
             distance_diffs = np.array([])
             solver_meta = {"success": False, "status": -1, "message": "SolverError"}
         
+        # A solution pinned to the room boundary is the optimiser giving up, not a position
+        status = "VALID"
+        if not tones_detected:
+            status = "TONE_NOT_DETECTED"
+        elif solver_meta["success"] and hybrid_solver is None and self._at_room_boundary(p_est, pos_solver):
+            status = "AT_ROOM_BOUNDARY"
+        elif solver_meta["success"] and len(solver_meta.get("residual", [])) and \
+                float(np.sqrt(np.mean(np.square(solver_meta["residual"])))) > self.max_residual_rms_m:
+            status = "INCONSISTENT_FIT"
+        elif not solver_meta["success"]:
+            status = "SOLVER_FAILED"
+        solver_meta = dict(solver_meta, status_reason=status)
+
         # Evaluate errors if true coordinate is provided
         err_3d = 0.0
         if true_position_only_for_eval is not None:
@@ -368,6 +494,9 @@ class IntegratedVLCLReceiver:
             "unwrapped_phases": unwrapped_phases,
             "distance_differences": distance_diffs,
             "error_3d_m": err_3d,
-            "success": solver_meta["success"],
+            "success": bool(solver_meta["success"]) and status == "VALID",
+            "status": status,
+            "tone_snr_db": tone_snr_db,
+            "tone_rss": tone_rss,
             "loc_phasors": loc_phasors
         }

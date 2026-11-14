@@ -195,33 +195,15 @@ class JointAdaptiveOptimizer:
             N = grid.fft_size
             snr_matrix = np.zeros((K, N), dtype=float)
 
-            # Extract physics channel state for each device
-            num_leds = len(physics_state.total_gains) if hasattr(physics_state, 'total_gains') and physics_state.total_gains else 4
+            # Per-subcarrier SNR from the integrated engine's receiver model at the
+            # power plan currently loaded (the previous iteration's Module 7 output from
+            # the second iteration on). The old estimate fed the photodiode noise and the
+            # optical gain alone and was ~40 dB optimistic, so every carrier got 256-QAM.
+            led_snr = self.vlcl_engine.subcarrier_snr_matrix(env_state, physics_state)
+            num_leds = led_snr.shape[0]
             for k_idx, dev_id in enumerate(device_ids):
                 assigned_led_id = dev_id if dev_id <= num_leds else ((dev_id - 1) % num_leds) + 1
-                assigned_led_idx = assigned_led_id - 1
-                
-                noise_var = physics_state.noise_variances.get(dev_id, 1e-12)
-                p_subcarrier = (comm_power_budget_total / num_leds) / (N / 2)
-                
-                powers = np.zeros((N, num_leds))
-                powers[:, assigned_led_idx] = p_subcarrier
-                
-                gains = np.zeros((num_leds, N), dtype=float)
-                for i_idx, led_id in enumerate(range(1, num_leds + 1)):
-                    h_opt = physics_state.total_gains.get(led_id, physics_state.los_gains.get(led_id, 1e-6))
-                    for n in range(N):
-                        f_hz = n * grid.subcarrier_spacing
-                        h_led_mag = self.vlcl_engine.led_response.magnitude(f_hz)
-                        gains[i_idx, n] = h_opt * h_led_mag
-
-                # Use official M3-COM-002 compliant SNR calculator
-                snr_matrix[k_idx, :] = compute_communication_snr(
-                    responsivity=DEFAULT_RESPONSIVITY,  # FIX: was 0.53 (inconsistent with all other sites using DEFAULT_RESPONSIVITY=0.54)
-                    subcarrier_powers=powers,
-                    channel_gains=gains,
-                    noise_variance=noise_var
-                )
+                snr_matrix[k_idx, :] = led_snr[assigned_led_id - 1]
             # Allocate subcarriers and modulation orders
             alloc_decision = self.vlcl_engine.adaptive_engine.allocate_from_snr_matrix(
                 snr_matrix=snr_matrix,

@@ -1,0 +1,423 @@
+{
+ "map": {
+  "points": 778,
+  "mean_fix_rate": 0.8061268209083119,
+  "share_points_no_fix": 0.12853470437017994,
+  "share_points_full_fix": 0.6311053984575835,
+  "median_p90_fix_error_m": 0.06211407563222464,
+  "by_zone": {
+   "office": {
+    "points": 180,
+    "mean_fix_rate": 0.9944444444444445,
+    "median_p90_err_m": 0.0236156223316148
+   },
+   "corridor_south": {
+    "points": 128,
+    "mean_fix_rate": 0.47916666666666663,
+    "median_p90_err_m": 0.07434475615734748
+   },
+   "corridor_north": {
+    "points": 192,
+    "mean_fix_rate": 0.912326388888889,
+    "median_p90_err_m": 0.06497465842273824
+   },
+   "link": {
+    "points": 48,
+    "mean_fix_rate": 0.9305555555555557,
+    "median_p90_err_m": 0.05407921505679163
+   },
+   "hall": {
+    "points": 190,
+    "mean_fix_rate": 0.706140350877193,
+    "median_p90_err_m": 0.11606618595515442
+   },
+   "riser": {
+    "points": 32,
+    "mean_fix_rate": 0.9427083333333333,
+    "median_p90_err_m": 0.06509965288280722
+   }
+  }
+ },
+ "drift_curve": [
+  [
+   2.0,
+   0.08743642845444347
+  ],
+  [
+   4.0,
+   0.2622125576174723
+  ],
+  [
+   6.0,
+   0.4485366114745151
+  ],
+  [
+   8.0,
+   0.6463894938767005
+  ],
+  [
+   10.0,
+   0.9005555582190968
+  ],
+  [
+   15.0,
+   1.7017529369365259
+  ]
+ ],
+ "routes": {
+  "stairwell_in_dark_stretch": {
+   "office_to_hall": {
+    "shortest": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.236,
+     "mean_wall_bumps": 0.216,
+     "median_max_error_m": 0.39998740998493243,
+     "p90_max_error_m": 0.7382795340563113,
+     "median_longest_no_fix_m": 7.496520817970216,
+     "median_walked_m": 21.711458459918838,
+     "route_m": 22.106601717798203
+    },
+    "risk_weighted": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.157053998801985,
+     "p90_max_error_m": 0.24727207756027675,
+     "median_longest_no_fix_m": 0.6348965605998699,
+     "median_walked_m": 41.537995007777155,
+     "route_m": 42.33883476483186
+    },
+    "drift_aware": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.15740486784677815,
+     "p90_max_error_m": 0.22563967223153045,
+     "median_longest_no_fix_m": 0.7114590646280907,
+     "median_walked_m": 40.185773848845514,
+     "route_m": 40.7175144212722
+    }
+   },
+   "office_to_hall_stairs": {
+    "shortest": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.22,
+     "mean_wall_bumps": 0.378,
+     "median_max_error_m": 0.4062961950341264,
+     "p90_max_error_m": 0.7067811126330493,
+     "median_longest_no_fix_m": 7.147069468319835,
+     "median_walked_m": 19.7845212305659,
+     "route_m": 20.338834764831837
+    },
+    "risk_weighted": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.1444043949228866,
+     "p90_max_error_m": 0.2037406888501345,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 45.56887575268483,
+     "route_m": 46.28858223313772
+    },
+    "drift_aware": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.1638382313384836,
+     "p90_max_error_m": 0.2529492470325711,
+     "median_longest_no_fix_m": 0.7010229461555131,
+     "median_walked_m": 44.65388986049455,
+     "route_m": 45.28858223313773
+    }
+   },
+   "link_to_hall": {
+    "shortest": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.204,
+     "mean_wall_bumps": 0.276,
+     "median_max_error_m": 0.3682779437818422,
+     "p90_max_error_m": 0.7545585807572301,
+     "median_longest_no_fix_m": 7.12470678053481,
+     "median_walked_m": 22.871415138108972,
+     "route_m": 23.36396103067892
+    },
+    "risk_weighted": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.15264288022564715,
+     "p90_max_error_m": 0.23881310332605146,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 33.0499614084637,
+     "route_m": 33.71751442127221
+    },
+    "drift_aware": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.15350065242835753,
+     "p90_max_error_m": 0.24050981258452636,
+     "median_longest_no_fix_m": 0.7091822215167742,
+     "median_walked_m": 32.45337653776106,
+     "route_m": 32.92462120245875
+    }
+   },
+   "north_to_office": {
+    "shortest": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.09441957923788663,
+     "p90_max_error_m": 0.12373541094876674,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 19.83021518521832,
+     "route_m": 20.303300858899096
+    },
+    "risk_weighted": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.09306446296570468,
+     "p90_max_error_m": 0.12156466281517236,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 20.360529332958322,
+     "route_m": 20.863961030678915
+    },
+    "drift_aware": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.09297597208397579,
+     "p90_max_error_m": 0.12267565942933922,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 19.79463531136076,
+     "route_m": 20.303300858899096
+    }
+   },
+   "hall_to_corridor_east": {
+    "shortest": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.18538128617291177,
+     "p90_max_error_m": 0.2667642188435231,
+     "median_longest_no_fix_m": 0.6424041447878692,
+     "median_walked_m": 6.982724780522348,
+     "route_m": 7.2426406871192865
+    },
+    "risk_weighted": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.1534043584706251,
+     "p90_max_error_m": 0.2392074518454998,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 6.987971395960315,
+     "route_m": 7.2426406871192865
+    },
+    "drift_aware": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.18975440820868028,
+     "p90_max_error_m": 0.26736116950153405,
+     "median_longest_no_fix_m": 0.6635664955485141,
+     "median_walked_m": 6.971052714390328,
+     "route_m": 7.2426406871192865
+    }
+   }
+  },
+  "dark_stretch_safe": {
+   "office_to_hall": {
+    "shortest": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.212,
+     "median_max_error_m": 0.3714152971627005,
+     "p90_max_error_m": 0.6966027885007174,
+     "median_longest_no_fix_m": 7.1264028049689045,
+     "median_walked_m": 21.728213579631742,
+     "route_m": 22.106601717798203
+    },
+    "risk_weighted": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.15406760271491743,
+     "p90_max_error_m": 0.23282816062580933,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 41.54586999244087,
+     "route_m": 42.33883476483186
+    },
+    "drift_aware": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.178,
+     "median_max_error_m": 0.3887216704421089,
+     "p90_max_error_m": 0.8385037731064959,
+     "median_longest_no_fix_m": 7.517043237097155,
+     "median_walked_m": 21.922746969495837,
+     "route_m": 22.313708498984752
+    }
+   },
+   "office_to_hall_stairs": {
+    "shortest": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.344,
+     "median_max_error_m": 0.38734945857463376,
+     "p90_max_error_m": 0.7145405563498762,
+     "median_longest_no_fix_m": 7.095090127372139,
+     "median_walked_m": 19.85038444748789,
+     "route_m": 20.338834764831837
+    },
+    "risk_weighted": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.1471097376900863,
+     "p90_max_error_m": 0.2100229450777489,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 45.57533932893274,
+     "route_m": 46.28858223313772
+    },
+    "drift_aware": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.162,
+     "median_max_error_m": 0.35810159211971326,
+     "p90_max_error_m": 0.8291512449076038,
+     "median_longest_no_fix_m": 7.526472949712074,
+     "median_walked_m": 20.384524999119165,
+     "route_m": 20.838834764831837
+    }
+   },
+   "link_to_hall": {
+    "shortest": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.24,
+     "median_max_error_m": 0.40883438715621884,
+     "p90_max_error_m": 0.8043236482777114,
+     "median_longest_no_fix_m": 7.4647598734370835,
+     "median_walked_m": 22.919002322547136,
+     "route_m": 23.36396103067892
+    },
+    "risk_weighted": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.1513582045963027,
+     "p90_max_error_m": 0.24035057087657588,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 33.06798492026725,
+     "route_m": 33.71751442127221
+    },
+    "drift_aware": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.128,
+     "median_max_error_m": 0.3845207825316083,
+     "p90_max_error_m": 0.8300012921869753,
+     "median_longest_no_fix_m": 7.464834413846015,
+     "median_walked_m": 23.138302454393596,
+     "route_m": 23.571067811865465
+    }
+   },
+   "north_to_office": {
+    "shortest": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.09476668462786714,
+     "p90_max_error_m": 0.12234261756999018,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 19.814345465379315,
+     "route_m": 20.303300858899096
+    },
+    "risk_weighted": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.09351660009748186,
+     "p90_max_error_m": 0.11973790610911102,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 20.346352099818688,
+     "route_m": 20.863961030678915
+    },
+    "drift_aware": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.09375978442187285,
+     "p90_max_error_m": 0.12216072967674134,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 19.81242627860105,
+     "route_m": 20.303300858899096
+    }
+   },
+   "hall_to_corridor_east": {
+    "shortest": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.1889964589725137,
+     "p90_max_error_m": 0.25372051673315393,
+     "median_longest_no_fix_m": 0.6620018949035524,
+     "median_walked_m": 6.981557785376179,
+     "route_m": 7.2426406871192865
+    },
+    "risk_weighted": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.1570444304554628,
+     "p90_max_error_m": 0.24420700701987094,
+     "median_longest_no_fix_m": 0.0,
+     "median_walked_m": 6.994500640564993,
+     "route_m": 7.2426406871192865
+    },
+    "drift_aware": {
+     "walks": 500,
+     "reached": 1.0,
+     "hazard_rate": 0.0,
+     "mean_wall_bumps": 0.0,
+     "median_max_error_m": 0.19143449132598925,
+     "p90_max_error_m": 0.2636060711523726,
+     "median_longest_no_fix_m": 0.6477668089493028,
+     "median_walked_m": 6.963155339940007,
+     "route_m": 7.2426406871192865
+    }
+   }
+  }
+ }
+}

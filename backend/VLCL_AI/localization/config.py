@@ -68,6 +68,14 @@ class LocalizationConfig:
         self.solver_max_iterations = sol.get("max_iterations", 200)
         self.solver_tolerance = sol.get("tolerance", 1.0e-9)
         self.fixed_height = sol.get("fixed_height_m", 0.85)
+        # "hybrid": A-DPDOA distance differences + RSS from the same tones, solved in 3D
+        # (handles any phone height). "adpdoa": the paper's distance-difference-only solve.
+        self.solver_mode = sol.get("mode", "hybrid")
+        self.hybrid_sigma_dd_m = sol.get("hybrid_sigma_dd_m", 0.005)
+        self.hybrid_sigma_log_rss = sol.get("hybrid_sigma_log_rss", 0.02)
+        # Tilt reported by the phone's IMU: true tilt plus this much error (degrees, 1 sigma)
+        self.imu_tilt_noise_deg = sol.get("imu_tilt_noise_deg", 1.0)
+        self.imu_seed = sol.get("imu_seed", 7)
         
         # Tone to LED mapping (Configurable mapping)
         # Default maps Tones 1,2,3,4 to LEDs 1,2,3,4 and Tone 5 to LED 1
@@ -102,6 +110,9 @@ class LocalizationConfig:
         if self.fp_count != 5:
             raise ConfigurationError(f"A-DPDOA algorithm requires exactly 5 frequencies, got {self.fp_count}.")
         
+        if self.solver_mode not in ("hybrid", "adpdoa"):
+            raise ConfigurationError(f"solver.mode must be 'hybrid' or 'adpdoa', got {self.solver_mode!r}.")
+
         if self.fp_start_freq <= 0:
             raise ConfigurationError(f"Start frequency must be positive, got {self.fp_start_freq} Hz.")
             

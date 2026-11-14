@@ -2,6 +2,21 @@ import numpy as np
 from typing import Tuple, List, Union
 from loguru import logger
 
+def infer_room_bounds(room_dims, led_positions) -> Tuple[float, float, float, float, float, float]:
+    """
+    Room extent (min_x, max_x, min_y, max_y, min_z, max_z) for a [W, L, H] room.
+
+    Two layouts are in use: the room frame with the origin at a floor corner
+    (0 <= x <= W), and the paper's layout centred on the origin (LEDs at +/-0.4 m).
+    An LED with a negative x or y means the centred layout.
+    """
+    W, L, H = (float(v) for v in room_dims)
+    pts = list(led_positions.values()) if isinstance(led_positions, dict) else list(led_positions)
+    if any(p[0] < 0 or p[1] < 0 for p in pts):
+        return (-W / 2.0, W / 2.0, -L / 2.0, L / 2.0, 0.0, H)
+    return (0.0, W, 0.0, L, 0.0, H)
+
+
 class CoordinateSystem:
     """
     Manages coordinate transformations, reference frames, and rotations (Roll, Pitch, Yaw)

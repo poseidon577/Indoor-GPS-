@@ -43,9 +43,6 @@ ENV_FEATURES: List[FieldSchema] = [
     FieldSchema("env_floor_reflectivity", "float32", "dimensionless",(0.0, 1.0), "Module1", "Floor reflectivity"),
     FieldSchema("env_ceiling_reflectivity","float32","dimensionless",(0.0, 1.0), "Module1", "Ceiling reflectivity"),
     FieldSchema("env_num_leds",           "int32",   "dimensionless",(1,   16),  "Module1", "Number of active LEDs"),
-    FieldSchema("env_rx_x",              "float32", "m",            None,        "Module1", "Receiver X position"),
-    FieldSchema("env_rx_y",              "float32", "m",            None,        "Module1", "Receiver Y position"),
-    FieldSchema("env_rx_z",              "float32", "m",            (0.0, 3.0),  "Module1", "Receiver Z (height)"),
     FieldSchema("env_rx_fov_deg",        "float32", "deg",          (20.0,180.0),"Module1", "Receiver field of view"),
     FieldSchema("env_num_obstacles",     "int32",   "dimensionless",(0, 20),     "Module1", "Number of obstacles in scene"),
     FieldSchema("env_mobility_type",     "str",     "dimensionless", None,       "Module1", "Receiver mobility model type"),
@@ -65,6 +62,10 @@ PHYS_FEATURES: List[FieldSchema] = [
     FieldSchema("phys_avg_noise_variance","float32","W^2",          (0.0, None), "Module2", "Mean noise variance across LEDs"),
     FieldSchema("phys_num_los_links",    "int32",   "dimensionless",(0, 16),     "Module2", "Number of unobstructed LOS links"),
     FieldSchema("phys_total_received_power_w","float32","W",        (0.0, None), "Module2", "Total received optical power"),
+] + [
+    FieldSchema(f"phys_received_power_w_{i}", "float32", "W", (0.0, None), "Module2",
+                f"Received optical power from LED {i} (NaN if the scene has no LED {i})")
+    for i in range(1, 17)
 ]
 
 # ── Communication features ────────────────────────────────────────────────────

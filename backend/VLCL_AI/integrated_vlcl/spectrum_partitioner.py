@@ -108,6 +108,27 @@ class SpectrumPartitioner:
         for idx in self.loc_indices:
             self.rho[0, idx] = 1
 
+    def assign_comm_groups(self, rho: np.ndarray, device_ids) -> None:
+        """
+        Makes the communication groups follow a Module 6 allocation: device k's group
+        becomes exactly the subcarriers allocated to it (plus their Hermitian mirrors).
+        Without this the transmitter and receiver kept the fixed contiguous split and an
+        allocation only changed which bins carried bits inside it.
+        """
+        N = self.grid.fft_size
+        groups = {g: [] for g in range(1, self.num_comm_groups + 1)}
+        for k_idx, dev_id in enumerate(device_ids):
+            if dev_id not in groups:
+                continue
+            for n in range(1, N // 2):
+                if rho[k_idx, n] == 1 and n not in self.loc_indices:
+                    groups[dev_id].extend([int(n), int(N - n)])
+        self.comm_groups = groups
+        self.rho[1:, :] = 0
+        for g_id, indices in self.comm_groups.items():
+            for idx in indices:
+                self.rho[g_id, idx] = 1
+
     def get_group_for_subcarrier(self, subcarrier_index: int) -> int:
         """Returns the group ID (1 to K) for a subcarrier index, or 0 if localization/guard/DC."""
         if subcarrier_index in self.loc_indices:

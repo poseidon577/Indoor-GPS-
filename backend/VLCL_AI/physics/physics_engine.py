@@ -12,7 +12,9 @@ from VLCL_AI.physics.constants import (
     DEFAULT_LENS_GAIN, SPEED_OF_LIGHT
 )
 from VLCL_AI.physics.optical_channel import compute_los_dc_gain
-from VLCL_AI.physics.reflection import compute_nlos_reflection
+from VLCL_AI.physics.reflection import compute_nlos_paths
+from VLCL_AI.physics.lambertian import lambertian_order
+from VLCL_AI.environment.coordinate_system import infer_room_bounds
 from VLCL_AI.physics.photodiode import Photodiode
 from VLCL_AI.physics.noise import total_noise_variance
 from VLCL_AI.physics.snr import compute_snr
@@ -45,6 +47,15 @@ class PhysicsState:
     channel_matrix: List[List[float]]
     coverage_map: Dict[str, Any]
     metrics: Dict[str, Any]
+    # One photodiode sees every LED at once, so its shot noise comes from the summed
+    # photocurrent and thermal/background noise is counted once, not once per LED.
+    # Both default to 0.0 for hand-built states; consumers fall back to noise_variances.
+    total_noise_variance: float = 0.0
+    noise_bandwidth_hz: float = 0.0
+    # First-order reflections arrive later than the direct path; gain-weighted mean
+    # delay and rms spread per LED. Empty for hand-built states (no NLOS delay).
+    nlos_delays: Dict[int, float] = field(default_factory=dict)
+    nlos_delay_spreads: Dict[int, float] = field(default_factory=dict)
 
 class PhysicsEngine:
     def __init__(self, config_path: Optional[str] = None):
@@ -134,6 +145,8 @@ class PhysicsEngine:
         irradiance_angles = {}
         los_gains = {}
         nlos_gains = {}
+        nlos_delays = {}
+        nlos_spreads = {}
         total_gains = {}
         received_powers = {}
         optical_delays = {}
@@ -200,17 +213,28 @@ class PhysicsEngine:
             if self.config["enable_nlos"] and self.config["enable_reflection"]:
                 # M2-PHY-003: LED normal sourced from EnvironmentState (not hardcoded [0,0,-1])
                 led_orientation = env_state.led_orientations.get(led_id, [0.0, 0.0, -1.0])
-                nlos_gain = compute_nlos_reflection(
+                paths = compute_nlos_paths(
                     led_pos=led_pos_arr,
                     led_normal=np.array(led_orientation),  # M2-PHY-003: per-LED orientation
-                    m=1.0,  # Default for NLOS secondary source; canonical m derived from beam_angle above for LOS
+                    m=lambertian_order(beam_angle),        # the LED's own pattern lights the walls
                     rx_pos=rx_pos,
                     rx_normal=rx_normal,
                     rx_area=effective_receiver_area,    # X-2: from env_state.receiver_hardware
                     fov_rad=np.radians(effective_fov_deg),  # X-2: from env_state.receiver_hardware
-                    room_dims=room_dims,   # INT-001: from env_state
-                    num_grid_points=16
+                    # Walls where the room actually is: corner-origin or centred layout
+                    bounds=infer_room_bounds(room_dims, env_state.led_positions),
+                    refractive_index=self.config["refractive_index"],
+                    patch_m=self.config.get("nlos_patch_m", 0.1),
+                    # The room's own surfaces, not the module defaults
+                    reflectivity={k: v for k, v in (
+                        ("wall", getattr(env_state, "wall_reflectivity", float("nan"))),
+                        ("floor", getattr(env_state, "floor_reflectivity", float("nan"))),
+                        ("ceiling", getattr(env_state, "ceiling_reflectivity", float("nan"))),
+                    ) if v is not None and np.isfinite(v)}
                 )
+                nlos_gain = paths["gain"]
+                nlos_delays[led_id] = paths["mean_delay_s"]
+                nlos_spreads[led_id] = paths["rms_delay_spread_s"]
             nlos_gains[led_id] = nlos_gain
 
             # Combine total channel gain
@@ -270,6 +294,16 @@ class PhysicsEngine:
             "signal_strength_category": "Strong" if metrics["average_snr"] > 25 else "Moderate" if metrics["average_snr"] > 15 else "Weak"
         }
         
+        # Noise at the photodiode with all LEDs on together
+        combined_noise = total_noise_variance(
+            signal_current=float(sum(electrical_currents.values())),
+            tia_gain=self.config["tia_gain"],
+            bandwidth=self.config["bandwidth"],
+            temperature=self.config["ambient_temperature"],
+            background_current=self.config["background_current"],
+            config=self.config["noise_config"]
+        )
+
         # Assemble PhysicsState
         state = PhysicsState(
             distances=distances,
@@ -287,7 +321,11 @@ class PhysicsEngine:
             snrs=snrs,
             channel_matrix=self.channel_estimator.get_channel_matrix().tolist(),
             coverage_map=coverage_map,
-            metrics=metrics
+            metrics=metrics,
+            total_noise_variance=float(combined_noise["total_variance"]),
+            noise_bandwidth_hz=float(self.config["bandwidth"]),
+            nlos_delays=nlos_delays,
+            nlos_delay_spreads=nlos_spreads
         )
         
         self.last_state = state

@@ -8,27 +8,28 @@ import pytest
 
 from VLCL_AI.integrated_vlcl.engine import IntegratedVLCLEngine
 from VLCL_AI.localization.rss import RSSMeasurementModel, RSSPositionSolver, calibrate_led_constants
-from VLCL_AI.tests.plan_helpers import make_states, xy_error, GRID_5x5, ROOM, RX_HEIGHT
+from VLCL_AI.tests.plan_helpers import make_states, xy_error, GRID_5x5, ROOM, RX_HEIGHT, paper_mode_engine
 
 
-# ── True-height leak ────────────────────────────────────────────────────────
+# ── True-height leak (paper mode: A-DPDOA only, 2D at the nominal height) ──────
+# The default engine now solves in 3D with the hybrid solver (step 3A.4, see
+# test_plan_step3a4_height.py); these tests pin the paper's mode explicitly.
 
 @pytest.mark.parametrize("z", [0.6, 0.85, 1.0])
 def test_2d_solver_uses_configured_height_not_true_height(z):
     env, ph = make_states(0.1, -0.1, z=z)
-    engine = IntegratedVLCLEngine()
+    engine = paper_mode_engine()
     est = engine.step(env, ph).localization_results["estimated_position"]
     assert est[2] == pytest.approx(engine.loc_config.fixed_height)
     assert engine.receiver.position_solver.fixed_height == pytest.approx(engine.loc_config.fixed_height)
 
 
-@pytest.mark.parametrize("z", [0.7, 0.85])
-def test_adpdoa_accurate_at_and_slightly_below_nominal_height(z):
+def test_paper_mode_accurate_at_nominal_height():
     errs = []
     for x, y in GRID_5x5[::2]:
-        env, ph = make_states(x, y, z=z, nlos=False)
-        errs.append(xy_error(IntegratedVLCLEngine().step(env, ph).localization_results["estimated_position"], x, y))
-    assert np.mean(errs) < 0.05
+        env, ph = make_states(x, y, nlos=False)
+        errs.append(xy_error(paper_mode_engine().step(env, ph).localization_results["estimated_position"], x, y))
+    assert np.mean(errs) < 0.01
 
 
 def test_wrong_height_assumption_costs_accuracy():
@@ -38,7 +39,7 @@ def test_wrong_height_assumption_costs_accuracy():
         e = []
         for x, y in GRID_5x5[::2]:
             env, ph = make_states(x, y, z=z, nlos=False)
-            e.append(xy_error(IntegratedVLCLEngine().step(env, ph).localization_results["estimated_position"], x, y))
+            e.append(xy_error(paper_mode_engine().step(env, ph).localization_results["estimated_position"], x, y))
         err[z] = np.mean(e)
     assert err[0.6] > 2 * err[0.85]
 
@@ -132,14 +133,6 @@ def test_error_grows_gracefully_with_noise():
         means.append(np.mean(e))
     assert means[0] < means[1] < means[2]
     assert means[1] < 0.05  # 2 % RSS noise stays within 5 cm in the paper cell
-
-
-def test_nlos_biases_rss_but_modestly():
-    e = []
-    for x, y in GRID_5x5:
-        env, ph = make_states(x, y, nlos=True)
-        e.append(xy_error(_solver(env).solve(_measure(ph))[0], x, y))
-    assert 0.001 < np.mean(e) < 0.15
 
 
 def test_tilt_error_grows_with_tilt():

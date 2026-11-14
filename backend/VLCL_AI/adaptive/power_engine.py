@@ -117,7 +117,8 @@ class PowerPreEqualizationEngine:
         localization_reserve_w: float = 0.1, # Reserved W per LED for loc tones
         power_mode: str = "EQUAL_POWER",
         pre_eq_mode: str = "REGULARIZED",
-        frequency_plan: Optional[Any] = None
+        frequency_plan: Optional[Any] = None,
+        tone_to_led_map: Optional[Dict[int, List[int]]] = None
     ) -> PowerDecision:
         """
         Executes Module 7 power allocation and pre-equalization for fixed Module 6 allocation (rho, M).
@@ -169,7 +170,15 @@ class PowerPreEqualizationEngine:
         # Set localization tone powers on positive and negative frequencies
         loc_freqs = frequency_plan.frequencies if (frequency_plan and hasattr(frequency_plan, "frequencies")) else [1.0e6, 1.1e6, 1.2e6, 1.3e6, 1.4e6]
         loc_bins = [int(round(f / grid.subcarrier_spacing)) for f in loc_freqs]
-        tone_map = {1: [1, 5], 2: [2], 3: [3], 4: [4]} # LED ID -> tone IDs
+        # LED ID -> tone IDs, from the localization config's tone -> LED map when given
+        # (the paper's map otherwise: LED 1 carries tones 1 and 5)
+        if tone_to_led_map:
+            tone_map: Dict[int, List[int]] = {}
+            for t_id, leds in sorted(tone_to_led_map.items()):
+                for l_id in leds:
+                    tone_map.setdefault(int(l_id), []).append(int(t_id))
+        else:
+            tone_map = {1: [1, 5], 2: [2], 3: [3], 4: [4]}
         tone_freq_map = {idx + 1: f for idx, f in enumerate(loc_freqs)}
         
         for led_id in range(1, self.num_leds + 1):

@@ -148,7 +148,8 @@ class JointAdaptiveOptimizer:
 
         # STEP 02: Initial Power & State Partitioning
         loc_power_per_led = 2.0 # Initial seed power per LED for localization tones
-        comm_power_budget_total = max(0.0, self.total_power_budget_w - 4 * loc_power_per_led)
+        num_leds = self.vlcl_engine.power_mapper.num_leds
+        comm_power_budget_total = max(0.0, self.total_power_budget_w - num_leds * loc_power_per_led)
 
         # Set initial power mapper defaults
         self.vlcl_engine.power_mapper.default_comm_power = comm_power_budget_total / (K * 50) # Approx per subcarrier
@@ -186,7 +187,7 @@ class JointAdaptiveOptimizer:
                 initial_p_loc_w=loc_power_per_led
             )
             loc_power_per_led = opt_p_loc
-            total_loc_power_w = 4 * loc_power_per_led # 4 LEDs
+            total_loc_power_w = num_leds * loc_power_per_led
             comm_power_budget_total = max(0.0, self.total_power_budget_w - total_loc_power_w)
 
             # STEP 04: Module 6 Adaptive Subcarrier & Bit Allocation (rho, M)
@@ -219,11 +220,12 @@ class JointAdaptiveOptimizer:
                 physics_state=physics_state,
                 grid=grid,
                 total_power_budget_w=self.total_power_budget_w,
-                per_led_max_power_w={led_id: self.per_led_max_power_w for led_id in range(1, 5)},
+                per_led_max_power_w={led_id: self.per_led_max_power_w for led_id in range(1, num_leds + 1)},
                 localization_reserve_w=loc_power_per_led,
                 power_mode=power_mode,
                 pre_eq_mode=pre_eq_mode,
-                frequency_plan=self.vlcl_engine.plan
+                frequency_plan=self.vlcl_engine.plan,
+                tone_to_led_map=self.vlcl_engine.loc_config.tone_to_led_map
             )
 
             current_power_matrix = power_decision.power_allocation.per_subcarrier_power_matrix

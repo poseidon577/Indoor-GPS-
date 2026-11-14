@@ -35,7 +35,7 @@ class VLCLPipeline:
         self.integrated = IntegratedVLCLEngine()
         
         # Modules 6-8 (Adaptive loop)
-        self.adaptive = AdaptiveTransmissionEngine()
+        self.adaptive = self.integrated.adaptive_engine   # same grid, same rate convention
         self.power = PowerPreEqualizationEngine()
         self.optimizer = JointAdaptiveOptimizer(vlcl_engine=self.integrated)
         

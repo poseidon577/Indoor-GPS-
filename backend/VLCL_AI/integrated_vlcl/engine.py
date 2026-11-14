@@ -93,7 +93,7 @@ class IntegratedVLCLEngine:
         cfg_comm = self.comm_config.config
         
         # Module 6 & 7 Adaptive Engines
-        self.adaptive_engine = AdaptiveTransmissionEngine()
+        self.adaptive_engine = None   # built below, once the OFDM grid is known
         self.power_engine = PowerPreEqualizationEngine()
         
         # Communication base modules
@@ -114,6 +114,12 @@ class IntegratedVLCLEngine:
                 reserve_localization=True # Always reserve for integrated engine
             )
         
+        # Module 6 rates must come from this grid: sample rate / N per subcarrier, slowed
+        # by the cyclic prefix (it assumed 20 MHz / 256 and counted mirror bins: 2.5x off)
+        from VLCL_AI.adaptive.config import AdaptiveConfig
+        self.adaptive_engine = AdaptiveTransmissionEngine(
+            AdaptiveConfig.for_grid(self.grid, cp_ratio=cfg_comm["cyclic_prefix_ratio"]))
+
         # Localization frequency plan
         if self.custom_plan is not None:
             self.plan = self.custom_plan
@@ -449,7 +455,8 @@ class IntegratedVLCLEngine:
                 physics_state=physics_state,
                 grid=self.grid,
                 frequency_plan=self.plan,
-                localization_reserve_w=localization_reserve_w
+                localization_reserve_w=localization_reserve_w,
+                tone_to_led_map=self.loc_config.tone_to_led_map
             )
             
         # The transmitter and receiver must use the subcarriers the allocation chose

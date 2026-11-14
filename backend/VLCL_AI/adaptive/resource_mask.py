@@ -40,6 +40,9 @@ class ResourceMask:
                 self.masks[k] = SubcarrierLockType.LOCALIZATION_LOCKED
             elif sc.purpose == SubcarrierPurpose.PILOT or sc.pilot:
                 self.masks[k] = SubcarrierLockType.PILOT_LOCKED
+            elif k > grid.fft_size // 2:
+                # DCO-OFDM: bin N-k is the conjugate of bin k and carries no extra data
+                self.masks[k] = SubcarrierLockType.NULL
             elif sc.active and sc.purpose == SubcarrierPurpose.COMMUNICATION:
                 self.masks[k] = SubcarrierLockType.AVAILABLE_COMM
             else:

@@ -17,10 +17,22 @@ class AdaptiveConfig:
     total_bandwidth_hz: float = 20.0e6          # Total communication bandwidth (Hz)
     fft_size: int = 256                         # OFDM FFT size
     cp_ratio: float = 0.25                      # Cyclic prefix ratio
-    
+    # Sample rate of the OFDM grid. When set, a subcarrier carries one symbol every
+    # (fft_size * (1 + cp_ratio)) samples; total_bandwidth_hz is then not used for rates.
+    sample_rate_hz: Optional[float] = None
+
     @property
     def subcarrier_bandwidth_hz(self) -> float:
+        """Symbols per second on one subcarrier (so rate = this x log2 M)."""
+        if self.sample_rate_hz:
+            return self.sample_rate_hz / (self.fft_size * (1.0 + self.cp_ratio))
         return self.total_bandwidth_hz / self.fft_size
+
+    @classmethod
+    def for_grid(cls, grid, cp_ratio: float, **kw) -> "AdaptiveConfig":
+        """Config whose rates match the OFDM grid that actually transmits."""
+        return cls(fft_size=grid.fft_size, sample_rate_hz=grid.sample_rate, cp_ratio=cp_ratio,
+                   total_bandwidth_hz=getattr(grid, "total_bandwidth", 20.0e6), **kw)
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "AdaptiveConfig":

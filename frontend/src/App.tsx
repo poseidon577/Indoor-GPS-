@@ -3,6 +3,7 @@ import { Terminal, Layers, RefreshCw, FileText, Download, Activity, BookOpen, Li
 
 import { SimulationState, RoomParams, LEDParams, ReceiverParams, ObstacleParams, MobilityParams } from "./types";
 import ThreeCanvas from "./components/ThreeCanvas";
+import { gridLayout } from "./lightLayout";
 import ControlPanel from "./components/ControlPanel";
 import DebugOverlay from "./components/DebugOverlay";
 import FormulaPanel from "./components/FormulaPanel";
@@ -139,6 +140,8 @@ export default function App() {
     commLoading: false,
     localizationMetrics: null,
     localizationLoading: false,
+    multicellMetrics: null,
+    multicellLoading: false,
     integratedMetrics: null,
     integratedLoading: false,
     adaptiveMetrics: null,
@@ -555,6 +558,60 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.frameIndex]);
 
+  // ─── Many-light localization polling (only with more than 4 LEDs, every 60 frames) ──
+  const multicellFrameRef = useRef(0);
+  const multicellInFlightRef = useRef(false);
+  useEffect(() => {
+    if (state.leds.length <= 4) return;
+    if (!state.isPlaying && state.multicellMetrics) return;
+    if (multicellInFlightRef.current) return;
+    multicellFrameRef.current = (multicellFrameRef.current + 1) % 60;
+    if (multicellFrameRef.current !== 1) return;
+    if (Object.keys(state.distances).length === 0) return;
+
+    const payload = {
+      current_time: state.currentTime,
+      frame_index: state.frameIndex,
+      fps: state.fps,
+      receiver_position: state.receiver.position,
+      receiver_orientation: state.receiver.orientation,
+      receiver_velocity: state.receiver.velocity,
+      receiver_acceleration: state.receiver.acceleration,
+      receiver_angles: { roll: state.receiver.roll, pitch: state.receiver.pitch, yaw: state.receiver.yaw },
+      receiver_fov_deg: state.receiver.fov,
+      led_positions: Object.fromEntries(state.leds.map((l) => [l.id, l.position])),
+      led_powers: Object.fromEntries(state.leds.map((l) => [l.id, l.power])),
+      led_active: Object.fromEntries(state.leds.map((l) => [l.id, true])),
+      led_orientations: Object.fromEntries(state.leds.map((l) => [l.id, l.orientation])),
+      led_beam_angles: Object.fromEntries(state.leds.map((l) => [l.id, l.beamAngle])),
+      room_dims: [state.room.width, state.room.length, state.room.height],
+      distances: state.distances,
+      incident_angles: state.incidentAngles,
+      irradiance_angles: state.irradianceAngles,
+      visibility_matrix: state.visibilityMatrix,
+      los_matrix: state.losMatrix,
+      blocking_obstacles: state.blockingObstacles,
+      obstacles: state.obstacles,
+    };
+    multicellInFlightRef.current = true;
+    setState((prev) => ({ ...prev, multicellLoading: true }));
+    fetch("/api/multicell", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+      .then((r) => r.json())
+      .then((data) => {
+        multicellInFlightRef.current = false;
+        setState((prev) => ({
+          ...prev,
+          multicellMetrics: data.success && data.multicell ? data.multicell : prev.multicellMetrics,
+          multicellLoading: false,
+        }));
+      })
+      .catch(() => {
+        multicellInFlightRef.current = false;
+        setState((prev) => ({ ...prev, multicellLoading: false }));
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.frameIndex]);
+
   // ─── Integrated Engine Polling (every 60 frames → ~3s) ────────────────────
   const integratedFrameRef = useRef(0);
   const integratedInFlightRef = useRef(false);
@@ -872,6 +929,25 @@ export default function App() {
     setPythonSuccess(null);
   };
 
+  // Ceiling light layout: n = 2 restores the original 4-LED room; n > 2 makes an n x n grid
+  const handleLayout = (n: number, spacing: number) => {
+    setState((prev) => {
+      const { leds, room } = n <= 2
+        ? { leds: INITIAL_LEDS, room: INITIAL_ROOM }
+        : gridLayout(n, spacing, INITIAL_ROOM, INITIAL_LEDS[0]);
+      const cx = room.width / 2, cy = room.length / 2;
+      return {
+        ...prev, leds, room,
+        receiver: { ...prev.receiver, position: [cx, cy, 0.85] },
+        mobility: { ...prev.mobility, center: [cx, cy, 0.85],
+          waypoints: [[1.0, 1.0, 0.85], [room.width - 1.0, 1.0, 0.85], [room.width - 1.0, room.length - 1.0, 0.85], [1.0, room.length - 1.0, 0.85]] },
+        trajectoryPoints: [[cx, cy, 0.85]],
+        distances: {}, incidentAngles: {}, irradianceAngles: {}, dcGains: {}, losMatrix: {}, visibilityMatrix: {}, blockingObstacles: {},
+        multicellMetrics: null, localizationMetrics: null,
+      };
+    });
+  };
+
   const generateYamlContent = () => `room:
   width: ${state.room.width.toFixed(1)}
   length: ${state.room.length.toFixed(1)}
@@ -1075,12 +1151,21 @@ ${state.obstacles.map((obs) => `  - id: "${obs.id}"
                   state={state}
                   setState={setState}
                   onReset={handleReset}
+                  onLayout={handleLayout}
                 />
               </div>
 
               {/* Center Column: 3D Canvas (50%) */}
               <div className="w-2/4 h-full relative rounded-xl overflow-hidden border border-[#313d4a] shadow-2xl bg-black">
-                <ThreeCanvas state={state} localizationMetrics={state.localizationMetrics} />
+                <ThreeCanvas state={state} marker={
+                  state.leds.length > 4
+                    ? (state.multicellMetrics?.interference_aware.success && state.multicellMetrics.interference_aware.estimated_position
+                        ? { estimated: state.multicellMetrics.interference_aware.estimated_position, truth: state.multicellMetrics.true_position }
+                        : null)
+                    : (state.localizationMetrics && state.localizationMetrics.quality.status !== "SOLVER_FAILED"
+                        ? { estimated: state.localizationMetrics.estimated_position, truth: state.localizationMetrics.true_position }
+                        : null)
+                } />
                 <ViewLegend />
               </div>
 
@@ -1108,6 +1193,8 @@ ${state.obstacles.map((obs) => `  - id: "${obs.id}"
                       commLoading={state.commLoading}
                       localizationMetrics={state.localizationMetrics}
                       localizationLoading={state.localizationLoading}
+                      multicellMetrics={state.multicellMetrics}
+                      multicellLoading={state.multicellLoading}
                       integratedMetrics={state.integratedMetrics}
                       integratedLoading={state.integratedLoading}
                       adaptiveMetrics={state.adaptiveMetrics}

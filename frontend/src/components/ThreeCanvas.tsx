@@ -1,14 +1,20 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { SimulationState, LocalizationMetrics } from "../types";
+import { SimulationState } from "../types";
+import { REUSE_COLOURS_HEX, reuseColours } from "../lightLayout";
+
+export interface PositionMarker {
+  estimated: [number, number, number];
+  truth: [number, number, number];
+}
 
 interface ThreeCanvasProps {
   state: SimulationState;
-  localizationMetrics?: LocalizationMetrics | null;
+  marker?: PositionMarker | null;
 }
 
-export default function ThreeCanvas({ state, localizationMetrics }: ThreeCanvasProps) {
+export default function ThreeCanvas({ state, marker }: ThreeCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -346,14 +352,16 @@ export default function ThreeCanvas({ state, localizationMetrics }: ThreeCanvasP
     if (!group) return;
     while (group.children.length > 0) group.remove(group.children[0]);
 
-    const ledColors = [0xfde68a, 0x67e8f9, 0xa78bfa, 0x6ee7b7];
+    // Colour = tone set (four-colour reuse): LEDs with the same colour share frequency tones
+    const colourOf = reuseColours(state.leds);
+    const many = state.leds.length > 9;  // keep the scene light with big grids
 
-    state.leds.forEach((led, i) => {
+    state.leds.forEach((led) => {
       // Python [x, y, z_height] => Three.js [x, z_height, y]
       const ledGroup = new THREE.Group();
       ledGroup.position.set(led.position[0], led.position[2], led.position[1]);
 
-      const bulbColor = ledColors[i % ledColors.length];
+      const bulbColor = REUSE_COLOURS_HEX[(colourOf[led.id] ?? 1) - 1];
 
       // Housing disc on ceiling
       const fixture = new THREE.Mesh(
@@ -370,10 +378,12 @@ export default function ThreeCanvas({ state, localizationMetrics }: ThreeCanvasP
       bulb.position.y = -0.05;
       ledGroup.add(bulb);
 
-      // Point light
-      const pt = new THREE.PointLight(bulbColor, 0.45, 4.5);
-      pt.position.y = -0.05;
-      ledGroup.add(pt);
+      // Point light (skipped for big grids — dozens of point lights slow the renderer)
+      if (!many) {
+        const pt = new THREE.PointLight(bulbColor, 0.45, 4.5);
+        pt.position.y = -0.05;
+        ledGroup.add(pt);
+      }
 
       // Downward emission cone (apex at LED, base at floor)
       const coneHeight = led.position[2]; // height above floor (Three.js Y)
@@ -394,7 +404,7 @@ export default function ThreeCanvas({ state, localizationMetrics }: ThreeCanvasP
             side: THREE.DoubleSide, depthWrite: false
           })
         );
-        ledGroup.add(cone);
+        if (!many) ledGroup.add(cone);
 
         // Floor footprint ring
         const ring = new THREE.Mesh(
@@ -487,15 +497,15 @@ export default function ThreeCanvas({ state, localizationMetrics }: ThreeCanvasP
 
     if (!locGroup) return;
 
-    if (!localizationMetrics || localizationMetrics.quality.status === "SOLVER_FAILED") {
+    if (!marker) {
       locGroup.visible = false;
       if (errLine) errLine.visible = false;
       return;
     }
 
     // Python [x, y, z_height] → Three.js [x, z_height, y]
-    const ep = localizationMetrics.estimated_position;
-    const tp = localizationMetrics.true_position;
+    const ep = marker.estimated;
+    const tp = marker.truth;
 
     locGroup.position.set(ep[0], ep[2], ep[1]);
     locGroup.visible = true;
@@ -508,7 +518,7 @@ export default function ThreeCanvas({ state, localizationMetrics }: ThreeCanvasP
       errLine.computeLineDistances();
       errLine.visible = true;
     }
-  }, [localizationMetrics]);
+  }, [marker?.estimated[0], marker?.estimated[1], marker?.estimated[2], marker?.truth[0], marker?.truth[1], !!marker]);
 
   return (
     <div
